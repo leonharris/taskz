@@ -9,7 +9,7 @@
 // Run function every x seconds
 const interval = setInterval(function() {
    //console.log('run');
-   getStatuses();
+   setTasks();
 }, 5000);
 
 
@@ -38,13 +38,12 @@ example JSON
 
 // https://codepen.io/LuisAFK/pen/ZEKLLEZ
 
-function getStatuses() {
+function setTasks() {
 
-	let jsonStatuses = [];
+	let setTasks = [];
 
-	//var col = document.getElementById('board').children;
 	const col = document.querySelectorAll('.status-column');
-
+    let i = 1;
 	for (let list of col) {
 
 		//console.log(item.id); // column/list id
@@ -58,68 +57,67 @@ function getStatuses() {
 		let tasks = list.querySelectorAll('.task');
 
 		// loop over the tasks
-		//const task_data = [];
+        // built the list tasks array
+		const task_data = [];
+        let ii = 1;
 		for (let task of tasks) {
-			//console.log(task);
 			let task_title_el = task.getElementsByClassName('task--title');
-			let title = task_title_el[0].innerHTML;
-			console.log(title);
+			let task__title = task_title_el[0].innerHTML;
 			let task_content_el = task.getElementsByClassName('task--content');
-			let content = task_content_el[0].innerHTML;
-			console.log(content);
+			let task__content = task_content_el[0].innerHTML;
+            //task_data.push('"' + ii + '": ["' + task__title + '","' + task__content + '"]');
+            task_data.push({
+                id: ii,
+                task_title: task__title,
+                task_content: task__content
+            });
+            ii++;
 		}
+        //console.log(task_data);
 
-		// build the json
-		//jsonStatuses.push('"' + (i + 1) + '": {"name": "' + col_header_text + '","color": "' + col_color + '","tasks": {"1": ["Task title 1", "Task content 1"],"2": ["Task title 3", "Task content 3"]}');
+        // build the array
+        setTasks.push({
+            name: col_header_text,
+            color: col_color,
+            tasks: task_data
+        });
 
+        i++;
 	}
-
-	/*
-	for (var i = 0; i < col.length; i++) {
-
-		console.log('col-' + i);
-
-		let status = col[i];
-		let id = status.id;
-		let col = document.getElementById(id);
-		let col_header_text = col.getElementsByTagName('header')[0].innerText;
-		// Get the --status-color style for column
-		var col_color = getComputedStyle(col).getPropertyValue('--status-color');
-
-		// loop over the tasks
-		let tasks = status.querySelectorAll('.task');
-		//console.log(tasks);
-		for (var i = 0; i < tasks.length; i++) {
-			console.log(tasks[0]);
-			let task_title_el = tasks[i].getElementsByClassName('task--title');
-			//let title = task_title_el[0].innerHTML;
-			//console.log(task_title_el);
-			let task_content_el = tasks[i].getElementsByClassName('task--content');
-			//let content = task_content_el[0].innerHTML;
-			//console.log(task_content_el);
-		}
-
-
-		jsonStatuses.push('"' + (i + 1) + '": {"name": "' + col_header_text + '","color": "' + col_color + '","tasks": {"1": ["Task title 1", "Task content 1"],"2": ["Task title 3", "Task content 3"]}');
-
-	}
-	*/
-
-	//const json = JSON.stringify(jsonStatuses);
-	const json = jsonStatuses;
-
-	//console.log(json);
 
 	// Put the object into storage
-	if (json.length) {
-		localStorage.setItem('toDoList', json);
+	if (setTasks.length) {
+        //console.log(setTasks);
+        let jsonSetTasks = JSON.stringify(setTasks); // convert array to json
+		localStorage.setItem('tasks', jsonSetTasks);
 	}
 
-	/*
-
-	// Retrieve the object from storage
-	//var retrievedObject = localStorage.getItem('testObject');
-
-	//console.log('retrievedObject: ', JSON.parse(retrievedObject));
-	*/
 }
+
+function populateTasks() {
+
+    // Retrieve the Tasks object from storage
+	const retrievedTasks = localStorage.getItem('tasks');
+    let tasks = JSON.parse(retrievedTasks);
+    for (let col of tasks) {
+
+        let col_name = col.name;
+        let col_color = col.color;
+        let task_items = col.tasks;
+
+        addColumn(col_name, col_color);
+
+        for (let task of task_items) {
+            console.log(task);
+            //addTask(taskListUL);
+        }
+    }
+
+    // add the delete button after the board has been populated with content
+    // running it sooner means the lists don't exist at runtime
+    deleteList();
+
+}
+// build out the grid if items in localStorage
+// run on page load
+populateTasks();

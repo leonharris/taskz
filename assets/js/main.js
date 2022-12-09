@@ -3,9 +3,10 @@
 
 // SortableJS
 // Set initial sorting for Task lists on screen
-const taskList = document.querySelectorAll('.tasks-list');
-for (i=0;i<taskList.length;i++) {
-	new Sortable(taskList[i], {
+const taskListUL = document.querySelectorAll('.tasks-list');
+
+for (i=0;i<taskListUL.length;i++) {
+	new Sortable(taskListUL[i], {
 		animation: 300,
 		group: 'task-list',
 		store: {
@@ -62,7 +63,7 @@ document.addEventListener('click',function(e){
 // Add Task
 // attach to status column
 
-function addTask(taskList) {
+function addTask(taskListUL) {
 
 	// create task div
 	var task_div = document.createElement("li");
@@ -84,11 +85,10 @@ function addTask(taskList) {
 
 	task_div.appendChild(task_header);
 	task_div.appendChild(task_content);
-   	taskList.appendChild(task_div);
-
+   	taskListUL.appendChild(task_div);
 
 	// SortableJS
-	new Sortable(taskList, {
+	new Sortable(taskListUL, {
 		animation: 300,
 		group: 'task-list',
 		store: {
@@ -155,9 +155,16 @@ function addColumn(column_title, column_color) {
 	// Add task button
 	var btn_add_task = document.createElement("button");
 	btn_add_task.classList.add('btn-add-task');
-	var btn_text = document.createTextNode("+ Add task");
-	btn_add_task.appendChild(btn_text);
+	var btn_add_task__text = document.createTextNode("+ Add task");
+	btn_add_task.appendChild(btn_add_task__text);
 	column_footer.appendChild(btn_add_task);
+
+	// Delete list button
+	var btn_delete_list = document.createElement("button");
+	btn_delete_list.classList.add('btn-delete-list');
+	var btn_delete_list__text = document.createTextNode("- Delete list");
+	btn_delete_list.appendChild(btn_delete_list__text);
+	column_footer.appendChild(btn_delete_list);
 
    	board.appendChild(column);
 
@@ -171,7 +178,26 @@ function addColumn(column_title, column_color) {
 	// clear input fields after adding a new list
 	//todoInput.value = "";
 
+	deleteList();
+
 }
+
+
+/*
+* Delete buttons
+------------------------------------------- */
+
+// Delete list
+function deleteList() {
+	const delete_list_btn = document.querySelectorAll('.btn-delete-list');
+	delete_list_btn.forEach(function(el) {
+		el.addEventListener('click', function(e) {
+			const parentList = el.closest('.status-column');
+			parentList.remove();
+		})
+	});
+}
+
 
 
 // Modals
