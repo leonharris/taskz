@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" type="text/css" href="assets/css/main.css">
+
+</head>
+<body>
+
+	<div class="site-container">
+
+		<h1>ToDo</h1>
+		<div id="board">
+			<div id="status_1" class="status-column" style="--status-color:#333333;"><header class="status-column--header"><span class="handle"></span><span contenteditable="true">Col 1</span></header><ul class="tasks-list"><li class="task"><h3 class="task--title" contenteditable="true">Task title</h3><div class="task--content" contenteditable="true">Task content</div></li></ul><footer><button class="btn-add-task">+ Add task</button></footer></div>
+		</div>
+
+	</div>
+
+	<footer class="site-footer">
+		<button id="add-list" class="btn">+ Add list</button>
+	</footer>
+
+	<div class="underlay"></div>
+	<modal id="modal--add-list" class="modal add-list">
+		<button id="close-modal" class="btn modal--close">X</button>
+		<div class="modal--wrap">
+			<h3>Add new task list</h3>
+			<form id="form--add-list">
+				<div class="form-field">
+					<input id="column_title" name="column_title" type="text" placeholder="Column title">
+				</div>
+				<div class="form-field">
+					<input id="column_hex" maxlength="7" name="column_color" type="text" placeholder="Column colour hex">
+				</div>
+				<button type="submit" class="btn">Create list</button>
+			</form>
+		</div>
+	</modal>
+
+	<script src="assets/js/Sortable.min.js"></script>
+	<script async src="assets/js/main.js"></script>
+	<script async src="assets/js/storage.js"></script>
+	
+</body>
+</html>
