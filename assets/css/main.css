@@ -4,6 +4,8 @@ html {
     border: none;
     --color-primary: red;
     --color-primary-dark: darkred;
+    --color-white: #fff;
+    --color-black: #000;
     --color-text: #777;
     --color-headers: #333;
     --status-color: white;
@@ -16,7 +18,8 @@ body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue",sans-serif;
     color: var(--color-text);
-    background: #fef6f1;
+    /*background: #fef6f1;*/
+    background-color: #f6f6f6;
 }
 
 * {
@@ -50,6 +53,35 @@ button {
 .btn:focus,
 .btn:hover {
     background-color: var(--color-primary-dark);
+}
+
+.btn-action {
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-action:hover {
+    color: var(--color-headers);
+}
+
+.btn-action:hover span {
+    background-color: var(--color-primary);
+}
+
+.btn-action svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+}
+/* Delete task button */
+.btn-delete-task-wrap {
+    text-align: right;
+}
+
+.btn-delete-task {
+    margin-left: auto;
 }
 
 input {
@@ -115,7 +147,7 @@ nav {
 .site-footer {
     position: fixed;
     bottom: 0;
-    left: 0;
+    right: 0;
 }
 
 .site-container {
@@ -140,6 +172,7 @@ nav {
 
 .status-column header {
     background-color: var(--status-color);
+    color: var(--color-white);
     padding: 10px 16px;
     margin: 0 0 20px;
     font-weight: bold;
@@ -169,7 +202,6 @@ nav {
 }
 
 .status-column footer button {
-    display: block;
     margin-bottom: 10px;
 }
 
