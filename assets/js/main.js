@@ -180,7 +180,7 @@ function createList(blank_col, column_title, column_color) {
 	// clear input fields after adding a new list
 	//todoInput.value = "";
 
-	deleteList();
+	//deleteList();
 	deleteTask();
 
 }
@@ -196,7 +196,10 @@ function deleteList() {
 	delete_list_btn.forEach(function(el) {
 		el.addEventListener('click', function(e) {
 			let parentList = el.closest('.status-column');
-			parentList.remove();
+			let confirmation = confirm("Are you sure you want to delete this list?");
+		    if(confirmation == true){
+				parentList.remove();
+		    }
 		})
 	});
 }
@@ -208,7 +211,10 @@ function deleteTask() {
 	delete_list_btn.forEach(function(el) {
 		el.addEventListener('click', function(e) {
 			let parentTask = el.closest('.task');
-			parentTask.remove();
+			let confirmation = confirm("Are you sure you want to delete this task?");
+		    if(confirmation == true){
+				parentTask.remove();
+		    }
 		})
 	});
 }
