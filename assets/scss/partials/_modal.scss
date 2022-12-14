@@ -1,0 +1,41 @@
+/* Modals
+---------------------------------------------*/
+.modal {
+  background-color: white;
+  min-width: 400px;
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.show-modal .modal {
+  display: block;
+}
+
+.underlay {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.show-modal .underlay {
+  display: block;
+}
+
+.modal--wrap {
+  padding: 50px;
+}
+
+.modal--wrap * {
+  margin-top: 0;
+}
+
+.modal--close {
+  float: right;
+}
