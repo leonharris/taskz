@@ -9,6 +9,14 @@
   ],
   "creatorBuild" : "34434",
   "files" : {
+    "\/.gitignore" : {
+      "cB" : 0,
+      "ft" : 8192,
+      "hM" : 0,
+      "oA" : 0,
+      "oAP" : "\/.gitignore",
+      "oF" : 0
+    },
     "\/.unused\/main copy.js" : {
       "bF" : 0,
       "ft" : 64,
@@ -16,6 +24,17 @@
       "mi" : 1,
       "oA" : 0,
       "oAP" : "\/.unused\/main copy-min.js",
+      "oF" : 0,
+      "sC" : 3,
+      "tS" : 0
+    },
+    "\/.unused\/Sortable.min.js" : {
+      "bF" : 0,
+      "ft" : 64,
+      "ma" : 0,
+      "mi" : 1,
+      "oA" : 0,
+      "oAP" : "\/.unused\/Sortable.min-min.js",
       "oF" : 0,
       "sC" : 3,
       "tS" : 0
@@ -32,6 +51,34 @@
       "oF" : 0,
       "pg" : 0
     },
+    "\/assets\/css\/main.css.map" : {
+      "cB" : 0,
+      "ft" : 8192,
+      "hM" : 0,
+      "oA" : 0,
+      "oAP" : "\/assets\/css\/main.css.map",
+      "oF" : 0
+    },
+    "\/assets\/icons\/xmark-regular.svg" : {
+      "ft" : 2097152,
+      "miP" : 0,
+      "oA" : 2,
+      "oAP" : "\/assets\/icons\/xmark-regular.svg",
+      "oF" : 0,
+      "opt" : 0,
+      "plM" : 52780316221407,
+      "prP" : 0
+    },
+    "\/assets\/icons\/xmark-solid.svg" : {
+      "ft" : 2097152,
+      "miP" : 0,
+      "oA" : 2,
+      "oAP" : "\/assets\/icons\/xmark-solid.svg",
+      "oF" : 0,
+      "opt" : 0,
+      "plM" : 52780316221407,
+      "prP" : 0
+    },
     "\/assets\/images\/grip-dots-vertical-solid.svg" : {
       "ft" : 2097152,
       "miP" : 0,
@@ -42,26 +89,26 @@
       "plM" : 52780316221407,
       "prP" : 0
     },
-    "\/assets\/js\/main.js" : {
+    "\/assets\/js\/main.min.js" : {
       "bF" : 0,
       "ft" : 64,
       "ma" : 0,
       "mi" : 1,
       "oA" : 0,
-      "oAP" : "\/assets\/js\/main-min.js",
+      "oAP" : "\/assets\/js\/main.min-min.js",
       "oF" : 0,
       "sC" : 3,
       "tS" : 0
     },
-    "\/assets\/js\/Sortable.min.js" : {
-      "bF" : 0,
+    "\/assets\/js\/src\/main.js" : {
+      "bF" : 2,
       "ft" : 64,
       "ma" : 0,
-      "mi" : 1,
+      "mi" : 0,
       "oA" : 0,
-      "oAP" : "\/assets\/js\/Sortable.min-min.js",
-      "oF" : 0,
-      "sC" : 3,
+      "oAP" : "\/assets\/js\/main.min.js",
+      "oF" : 2,
+      "sC" : 0,
       "tS" : 0
     },
     "\/assets\/js\/storage.js" : {
@@ -82,7 +129,7 @@
       "dP" : 10,
       "ec" : 1,
       "ft" : 4,
-      "ma" : 0,
+      "ma" : 1,
       "oA" : 0,
       "oAP" : "\/assets\/css\/main.css",
       "oF" : 2,
@@ -100,6 +147,21 @@
       "ma" : 0,
       "oA" : 1,
       "oAP" : "\/assets\/scss\/partials\/_base.css",
+      "oF" : 0,
+      "oS" : 0,
+      "pg" : 0,
+      "sct" : 0
+    },
+    "\/assets\/scss\/partials\/_form.scss" : {
+      "aP" : 0,
+      "bl" : 0,
+      "co" : 0,
+      "dP" : 10,
+      "ec" : 1,
+      "ft" : 4,
+      "ma" : 0,
+      "oA" : 1,
+      "oAP" : "\/assets\/scss\/partials\/_form.css",
       "oF" : 0,
       "oS" : 0,
       "pg" : 0,
@@ -142,6 +204,28 @@
       "oA" : 0,
       "oAP" : "\/index.htm",
       "oF" : 0
+    },
+    "\/node_modules" : {
+      "ft" : 65536,
+      "oA" : 2,
+      "oAP" : "\/node_modules",
+      "oF" : 0
+    },
+    "\/package-lock.json" : {
+      "ft" : 524288,
+      "oA" : 1,
+      "oAP" : "\/package-lock-min.json",
+      "oF" : 0,
+      "oO" : 1,
+      "oS" : 1
+    },
+    "\/package.json" : {
+      "ft" : 524288,
+      "oA" : 1,
+      "oAP" : "\/package-min.json",
+      "oF" : 0,
+      "oO" : 1,
+      "oS" : 1
     },
     "\/README.md" : {
       "cB" : 0,
