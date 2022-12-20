@@ -211,7 +211,7 @@ nav {
   cursor: text;
 }
 .task--title {
-  font-size: clamp(1rem, 2vw, 1.1rem);
+  font-size: var(--font-size-md);
   margin-bottom: 6px;
   line-height: 1.3;
 }
