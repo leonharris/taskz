@@ -118,15 +118,15 @@ nav {
   bottom: 0;
   left: 0;
   width: 100%;
-  box-shadow: 0 0 10px rgba(black, 0.2);
-  background-color: var(--color-white);
+  //box-shadow: 0 0 10px rgba(black, 0.2);
+  //background-color: var(--color-white);
 }
 
 .site-container {
-  padding: 2rem 1rem 80px;
+  padding: 1rem 1rem 80px;
   overflow-x: auto;
   @media only screen and (min-width: 600px) {
-    padding: 2rem 3rem 80px;
+    padding: 3vw 3vw 80px;
   }
 }
 /* Board Container
@@ -144,7 +144,7 @@ nav {
 
   @media only screen and (min-width: 600px) {
     min-width: 250px;
-    max-width: 250px;
+    //max-width: 250px;
     margin-right: 30px;
   }
 }
