@@ -37,6 +37,7 @@ button {
   color: var(--color-white);
   font-weight: bold;
   border-radius: 4px;
+  font-size: var(--font-size-sm);
 }
 
 .btn:focus,
@@ -79,19 +80,8 @@ button {
 }
 
 /* Add List bnt */
-#add-list {
-  background-color: transparent;
-  display: flex;
-  align-items: center;
-  color: var(--color-text);
-  font-weight: normal;
-  margin-left: auto;
-  font-size: var(--font-size-sm);
-  svg {
-    width: 40px;
-    height: 40px;
-    margin-right: 8px;
-  }
+.btn#add-list {
+  margin: 0 20px 20px auto;
 }
 
 nav {
@@ -118,6 +108,7 @@ nav {
   bottom: 0;
   left: 0;
   width: 100%;
+  text-align: right;
   //box-shadow: 0 0 10px rgba(black, 0.2);
   //background-color: var(--color-white);
 }
