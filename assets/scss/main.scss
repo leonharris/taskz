@@ -61,11 +61,11 @@ button {
     }
   }
   svg {
-    width: 20px;
-    height: 20px;
+    width: 17px;
+    height: 17px;
     margin-right: 6px;
     path {
-      fill: #444;
+      fill: var(--color-text);
     }
   }
 }
@@ -122,7 +122,7 @@ nav {
 .site-container {
   padding: 1rem 1rem 80px;
   @media only screen and (min-width: 600px) {
-    padding: 3vw 3vw 80px;
+    padding: 2vw 2vw 80px;
   }
 }
 /* Board Container
@@ -184,6 +184,7 @@ nav {
     }
     button {
       margin-bottom: 10px;
+      font-weight: 700;
     }
   }
 }
