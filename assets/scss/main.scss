@@ -115,7 +115,7 @@ nav {
 ------------------------------------------------ */
 .app-navbar {
   background-color: white;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   margin-bottom: 30px;
   padding: var(--space-s);
   display: flex;
@@ -173,7 +173,7 @@ nav {
   font-weight: bold;
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
 }
 
 .status-column header span.handle {
@@ -212,11 +212,12 @@ nav {
 --------------------------------------------------*/
 .task {
   background-color: var(--color-white);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding: 10px 10px;
-  border-left: 5px solid var(--status-color);
+  border: 2px solid var(--status-color);
+  border-left-width: 6px;
   cursor: grab;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
 }
 
 .task--content,
