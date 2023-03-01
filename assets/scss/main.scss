@@ -68,6 +68,18 @@ button {
       fill: var(--color-text);
     }
   }
+
+  &.btn-edit-list {
+    svg {
+      margin: 0;
+      path {
+        fill: var(--color-white);
+      }
+    }
+    &:hover {
+      opacity: 0.7;
+    }
+  }
 }
 
 /* Delete task button */
@@ -79,6 +91,9 @@ button {
   margin-left: auto;
 }
 
+.site-title {
+  margin-right: auto;
+}
 nav {
   float: right;
   margin-bottom: 20px;
