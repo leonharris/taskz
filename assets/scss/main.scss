@@ -22,6 +22,13 @@ h4 {
   margin-top: 0;
 }
 
+p {
+  margin-bottom: var(--space-s);
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
 button {
   padding: 0;
   border: 0;
@@ -104,11 +111,11 @@ nav {
 }
 
 .notice {
-  background-color: var(--color-black);
-  color: var(--color-white);
+  background-color: var(--color-white);
   text-align: left;
-  font-size: 13px;
-  padding: 5px 10px;
+  padding: var(--space-s);
+  margin-bottom: var(--space-m);
+  border-radius: var(--border-radius);
 }
 
 /* Navbar
@@ -116,7 +123,7 @@ nav {
 .app-navbar {
   background-color: white;
   border-radius: var(--border-radius);
-  margin-bottom: 30px;
+  margin-bottom: var(--space-s);
   padding: var(--space-s);
   display: flex;
   justify-content: space-between;

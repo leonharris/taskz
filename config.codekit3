@@ -101,14 +101,14 @@
       "tS" : 0
     },
     "\/assets\/js\/src\/main.js" : {
-      "bF" : 2,
+      "bF" : 0,
       "ft" : 64,
       "ma" : 0,
-      "mi" : 0,
+      "mi" : 1,
       "oA" : 0,
-      "oAP" : "\/assets\/js\/main.min.js",
-      "oF" : 2,
-      "sC" : 0,
+      "oAP" : "\/assets\/js\/src\/main-min.js",
+      "oF" : 0,
+      "sC" : 3,
       "tS" : 0
     },
     "\/assets\/js\/storage.js" : {
@@ -123,17 +123,17 @@
       "tS" : 0
     },
     "\/assets\/scss\/main.scss" : {
-      "aP" : 1,
-      "bl" : 1,
+      "aP" : 0,
+      "bl" : 0,
       "co" : 0,
       "dP" : 10,
       "ec" : 1,
       "ft" : 4,
-      "ma" : 1,
+      "ma" : 0,
       "oA" : 0,
-      "oAP" : "\/assets\/css\/main.css",
-      "oF" : 2,
-      "oS" : 3,
+      "oAP" : "\/assets\/scss\/main.css",
+      "oF" : 0,
+      "oS" : 0,
       "pg" : 0,
       "sct" : 0
     },
@@ -255,7 +255,7 @@
   },
   "projectAttributes" : {
     "creationDate" : 692705244.59304404,
-    "displayValue" : "Taskz",
+    "displayValue" : "taskz (html)",
     "displayValueWasSetByUser" : 1,
     "iconImageName" : "brackets_orange",
     "iconImageWasSetByUser" : 0
