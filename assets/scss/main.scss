@@ -123,10 +123,13 @@ nav {
 .app-navbar {
   background-color: white;
   border-radius: var(--border-radius);
-  margin-bottom: var(--space-s);
   padding: var(--space-s);
   display: flex;
   justify-content: space-between;
+  position: fixed;
+  bottom: 20px;
+  width: calc(100% - 60px);
+  box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 /* Footer
@@ -144,7 +147,7 @@ nav {
 .site-container {
   padding: 1rem 1rem 80px;
   @media only screen and (min-width: 600px) {
-    padding: 2vw 2vw 80px;
+    padding: 2vw 2vw 130px;
   }
 }
 /* Board Container
