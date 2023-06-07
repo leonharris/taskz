@@ -19,41 +19,35 @@ var colorPicker = new iro.ColorPicker("#color-picker", {
 // Set initial sorting for Task lists on screen
 */
 function activateSortable() {
-	let taskListUL = document.querySelectorAll('.tasks-list');
-	for (let i=0;i<taskListUL.length;i++) {
-		new Sortable(taskListUL[i], {
-			animation: 300,
-			group: 'task-list',
-			store: {
-				// Get the order of elements. Called once during initialization.
-				get: function (sortable) {
-					var order = localStorage.getItem(sortable.options.group.name);
-					return order ? order.split('|') : [];
-				},
-
-				// Save the order of elements. Called onEnd (when the item is dropped).
-
-				set: function (sortable) {
-					var order = sortable.toArray();
-					localStorage.setItem(sortable.options.group.name, order.join('|'));
-				}
-			}
-		});
-	};
+  const taskListUL = document.querySelectorAll('.tasks-list');
+  taskListUL.forEach((ul) => {
+    new Sortable(ul, {
+      animation: 300,
+      group: 'task-list',
+      store: {
+        get: (sortable) => {
+          const order = localStorage.getItem(sortable.options.group.name);
+          return order ? order.split('|') : [];
+        },
+        set: (sortable) => {
+          const order = sortable.toArray();
+          localStorage.setItem(sortable.options.group.name, order.join('|'));
+        }
+      }
+    });
+  });
 }
 
 // Add new List Column on form submit
 
 function getStatusFormData(form) {
-  let formData = new FormData(form);
-  let blank_col =  true;
-  let hex = colorPicker.color.hexString;
-  if (!hex) {
-	  hex = '#222';
-  }
-  createList(blank_col, formData.get('column_title'), hex);
+  const formData = new FormData(form);
+  const columnTitle = formData.get('column_title');
+  const hex = colorPicker.color.hexString || '#222';
+  createList(true, columnTitle, hex);
 }
-document.getElementById("form--add-list").addEventListener("submit", function (event) {
+
+document.getElementById("form--add-list").addEventListener("submit", (event) => {
   event.preventDefault();
   getStatusFormData(event.target);
   document.body.classList.remove('show-modal');
@@ -62,17 +56,12 @@ document.getElementById("form--add-list").addEventListener("submit", function (e
 
 
 // Add task on "add task" button click
-document.addEventListener('click',function(e){
-	var add_task_links = document.getElementsByClassName('btn-add-task');
-	for(var i = 0; i < add_task_links.length; i++) {
-		var add_task_link = add_task_links[i];
-		add_task_link.onclick = function(e) {
-			let taskListUL = e.target.parentNode.parentNode.previousSibling;
-			// Add blank task into list
-			let empty_task = createTask("", "");
-			taskListUL.appendChild(empty_task);
-		}
-	}
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('btn-add-task')) {
+    const taskListUL = e.target.parentNode.parentNode.previousSibling;
+    const emptyTask = createTask("", "");
+    taskListUL.appendChild(emptyTask);
+  }
 });
 
 
@@ -229,18 +218,19 @@ function deleteList() {
 
 // Delete task
 function deleteTask() {
-	let delete_list_btn = document.querySelectorAll('.btn-delete-task');
-	delete_list_btn.forEach(function(el) {
-		el.addEventListener('click', function(e) {
-			let parentTask = el.closest('.task');
-			let confirmation = confirm("Are you sure you want to delete this task?");
-		    if(confirmation == true){
-				parentTask.remove();
-		    }
-		})
-	});
+  let deleteButtons = document.querySelectorAll('.btn-delete-task');
+  deleteButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      let parentTask = button.closest('.task');
+      if (parentTask) {
+        let confirmation = confirm("Are you sure you want to delete this task?");
+        if (confirmation) {
+          parentTask.remove();
+        }
+      }
+    });
+  });
 }
-
 
 
 // Modals
@@ -368,7 +358,7 @@ function populateTasks() {
     // add the delete buttons after the board has been populated with content
     // running it sooner means the lists don't exist at runtime
     deleteList();
-    deleteTask();
+    //deleteTask();
 
     // activate Sortabel JS on all task lists
     activateSortable();
