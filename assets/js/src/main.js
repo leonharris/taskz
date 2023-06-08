@@ -164,6 +164,7 @@ function createList(blank_col, column_title, column_color) {
 
 	// Add status column footer
 	let column_footer = document.createElement("footer");
+    column_footer.classList.add('status-column--footer');
 	column_inner.appendChild(column_footer);
 
 
