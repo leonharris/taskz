@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@jaames/iro": "^5.5.2",
+    "sortablejs": "^1.15.0"
+  }
+}

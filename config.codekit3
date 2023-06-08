@@ -17,28 +17,6 @@
       "oAP" : "\/.gitignore",
       "oF" : 0
     },
-    "\/.unused\/main copy.js" : {
-      "bF" : 0,
-      "ft" : 64,
-      "ma" : 0,
-      "mi" : 1,
-      "oA" : 0,
-      "oAP" : "\/.unused\/main copy-min.js",
-      "oF" : 0,
-      "sC" : 3,
-      "tS" : 0
-    },
-    "\/.unused\/Sortable.min.js" : {
-      "bF" : 0,
-      "ft" : 64,
-      "ma" : 0,
-      "mi" : 1,
-      "oA" : 0,
-      "oAP" : "\/.unused\/Sortable.min-min.js",
-      "oF" : 0,
-      "sC" : 3,
-      "tS" : 0
-    },
     "\/assets\/css\/main.css" : {
       "aP" : 1,
       "bl" : 0,
