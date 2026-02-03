@@ -493,6 +493,7 @@ document.querySelector('.underlay').addEventListener('click', e => {
 
 // Auto-save to Supabase every 5 seconds (if logged in)
 const saveInterval = setInterval(function() {
+  console.log('Auto-save check - User:', currentUser ? currentUser.email : 'not logged in');
   if (currentUser) {
     saveBoardToSupabase();
   }
@@ -500,6 +501,16 @@ const saveInterval = setInterval(function() {
 
 // Initialize app - check auth state
 checkAuth();
+
+// Expose debugging functions globally
+window.taskzDebug = {
+  saveBoardToSupabase,
+  loadBoardFromSupabase,
+  getBoardData,
+  getCurrentUser: () => currentUser,
+  supabase
+};
+console.log('Taskz loaded. Debug with window.taskzDebug');
 
 /*
 * Auth Form Event Handlers
