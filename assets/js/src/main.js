@@ -2,6 +2,218 @@
 import iro from '@jaames/iro';
 // sortableJS
 import Sortable from 'sortablejs';
+// Supabase
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Track current user
+let currentUser = null;
+
+/*
+* Supabase Authentication Functions
+*/
+
+// Sign up with email/password
+async function signUp(email, password) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (error) {
+    alert('Error signing up: ' + error.message);
+    return null;
+  }
+  alert('Check your email for the confirmation link!');
+  return data;
+}
+
+// Sign in with email/password
+async function signIn(email, password) {
+  console.log('Attempting sign in with:', email);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) {
+    console.error('Sign in error:', error);
+    alert('Error signing in: ' + error.message);
+    return null;
+  }
+  console.log('Sign in successful:', data);
+  return data;
+}
+
+// Sign out
+async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    alert('Error signing out: ' + error.message);
+    return;
+  }
+  currentUser = null;
+  updateAuthUI();
+  // Clear the board and show login
+  document.getElementById('board').innerHTML = '';
+}
+
+// Update UI based on auth state
+function updateAuthUI() {
+  const authContainer = document.getElementById('auth-container');
+  const appContent = document.getElementById('app-content');
+  const userEmail = document.getElementById('user-email');
+
+  if (currentUser) {
+    authContainer.style.display = 'none';
+    appContent.style.display = 'block';
+    if (userEmail) userEmail.textContent = currentUser.email;
+  } else {
+    authContainer.style.display = 'flex';
+    appContent.style.display = 'none';
+  }
+}
+
+// Listen for auth state changes
+supabase.auth.onAuthStateChange(async (event, session) => {
+  currentUser = session?.user || null;
+  updateAuthUI();
+
+  if (currentUser) {
+    // Load user's board from Supabase
+    await loadBoardFromSupabase();
+  }
+});
+
+// Check initial auth state
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  currentUser = session?.user || null;
+  updateAuthUI();
+
+  if (currentUser) {
+    await loadBoardFromSupabase();
+  }
+}
+
+/*
+* Supabase Data Functions
+*/
+
+// Save board to Supabase
+async function saveBoardToSupabase() {
+  if (!currentUser) return;
+
+  const boardData = getBoardData();
+  if (!boardData.length) return;
+
+  // Check if user already has a board
+  const { data: existingBoard } = await supabase
+    .from('boards')
+    .select('id')
+    .eq('user_id', currentUser.id)
+    .single();
+
+  if (existingBoard) {
+    // Update existing board
+    await supabase
+      .from('boards')
+      .update({ data: boardData, updated_at: new Date().toISOString() })
+      .eq('id', existingBoard.id);
+  } else {
+    // Insert new board
+    await supabase
+      .from('boards')
+      .insert({ user_id: currentUser.id, data: boardData });
+  }
+}
+
+// Load board from Supabase
+async function loadBoardFromSupabase() {
+  if (!currentUser) return;
+
+  const { data: board, error } = await supabase
+    .from('boards')
+    .select('data')
+    .eq('user_id', currentUser.id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error loading board:', error);
+    return;
+  }
+
+  if (board && board.data) {
+    // Clear existing board
+    document.getElementById('board').innerHTML = '';
+    // Populate from Supabase data
+    populateTasksFromData(board.data);
+  }
+}
+
+// Get current board data as JSON
+function getBoardData() {
+  let boardData = [];
+  const col = document.querySelectorAll('.status-column');
+
+  for (let list of col) {
+    let list_id = list.id;
+    let col_el = document.getElementById(list_id);
+    let col_header_text = col_el.getElementsByTagName('header')[0].innerText;
+    var col_color = getComputedStyle(col_el).getPropertyValue('--status-color');
+
+    let tasks = list.querySelectorAll('.task');
+    const task_data = [];
+    let ii = 1;
+
+    for (let task of tasks) {
+      let task_title_el = task.getElementsByClassName('task--title');
+      let task__title = task_title_el[0].innerHTML;
+      let task_content_el = task.getElementsByClassName('task--content');
+      let task__content = task_content_el[0].innerHTML;
+      task_data.push({
+        id: ii,
+        task_title: task__title,
+        task_content: task__content
+      });
+      ii++;
+    }
+
+    boardData.push({
+      name: col_header_text,
+      color: col_color,
+      tasks: task_data
+    });
+  }
+
+  return boardData;
+}
+
+// Populate tasks from data (used by both localStorage and Supabase)
+function populateTasksFromData(tasks) {
+  let i = 0;
+  for (let col of tasks) {
+    let col_name = col.name;
+    let col_color = col.color;
+    let task_items = col.tasks;
+
+    let blank_col = false;
+    createList(blank_col, col_name, col_color);
+
+    var listCol = document.getElementsByClassName('tasks-list');
+
+    for (let task of task_items) {
+      let task_li = createTask(task.task_title, task.task_content);
+      listCol[i].appendChild(task_li);
+    }
+    i++;
+  }
+
+  deleteList();
+  activateSortable();
+}
 
 /*
 * Iro Colour Picker
@@ -52,7 +264,6 @@ document.getElementById("form--add-list").addEventListener("submit", (event) => 
   getStatusFormData(event.target);
   document.body.classList.remove('show-modal');
 });
-
 
 
 // Add task on "add task" button click
@@ -243,7 +454,6 @@ const closeModalButton = document.querySelector('#close-modal');
 addListButton.addEventListener("click", openModal);
 closeModalButton.addEventListener("click", closeModal);
 
-
 // Open modal
 function openModal() {
 	document.body.classList.add('show-modal');
@@ -260,112 +470,58 @@ document.querySelector('.underlay').addEventListener('click', e => {
 
 
 
-/* localStorage JS
+/* Data Persistence
 ---------------------------------------------------- */
 
-// Save page data to localStorage
-// Run function every x seconds
-const interval = setInterval(function() {
-   //console.log('run');
-   createLists_localStorage();
+// Auto-save to Supabase every 5 seconds (if logged in)
+const saveInterval = setInterval(function() {
+  if (currentUser) {
+    saveBoardToSupabase();
+  }
 }, 5000);
 
+// Initialize app - check auth state
+checkAuth();
 
-function createLists_localStorage() {
+/*
+* Auth Form Event Handlers
+*/
 
-	let createLists_localStorage = [];
+// Wait for DOM to be ready for auth forms
+document.addEventListener('DOMContentLoaded', function() {
+  const authForm = document.getElementById('auth-form');
+  const authToggle = document.getElementById('auth-toggle');
+  const authSubmit = document.getElementById('auth-submit');
+  const authTitle = document.getElementById('auth-title');
+  const signOutBtn = document.getElementById('sign-out-btn');
 
-	const col = document.querySelectorAll('.status-column');
-    let i = 1;
-	for (let list of col) {
+  let isSignUp = false;
 
-		//console.log(item.id); // column/list id
-		let list_id = list.id;
-		let col = document.getElementById(list_id);
-		let col_header_text = col.getElementsByTagName('header')[0].innerText;
-		// Get the --status-color style for column
-		var col_color = getComputedStyle(col).getPropertyValue('--status-color');
+  if (authToggle) {
+    authToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      isSignUp = !isSignUp;
+      authTitle.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+      authSubmit.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+      authToggle.textContent = isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
+    });
+  }
 
-		// get the tasks
-		let tasks = list.querySelectorAll('.task');
+  if (authForm) {
+    authForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
 
-		// loop over the tasks
-        // built the list tasks array
-		const task_data = [];
-        let ii = 1;
-		for (let task of tasks) {
-			let task_title_el = task.getElementsByClassName('task--title');
-			let task__title = task_title_el[0].innerHTML;
-			let task_content_el = task.getElementsByClassName('task--content');
-			let task__content = task_content_el[0].innerHTML;
-            //task_data.push('"' + ii + '": ["' + task__title + '","' + task__content + '"]');
-            task_data.push({
-                id: ii,
-                task_title: task__title,
-                task_content: task__content
-            });
-            ii++;
-		}
-        //console.log(task_data);
+      if (isSignUp) {
+        await signUp(email, password);
+      } else {
+        await signIn(email, password);
+      }
+    });
+  }
 
-        // build the array
-        createLists_localStorage.push({
-            name: col_header_text,
-            color: col_color,
-            tasks: task_data
-        });
-
-        i++;
-	}
-
-	// Put the object into storage
-	if (createLists_localStorage.length) {
-        //console.log(createLists_localStorage);
-        let jsonSetTasks = JSON.stringify(createLists_localStorage); // convert array to json
-		localStorage.setItem('tasks', jsonSetTasks);
-	}
-
-}
-
-function populateTasks() {
-
-    // Retrieve the Tasks object from storage
-	const retrievedTasks = localStorage.getItem('tasks');
-    let tasks = JSON.parse(retrievedTasks);
-    let i = 0;
-    for (let col of tasks) {
-
-        let col_name = col.name;
-        let col_color = col.color;
-        let task_items = col.tasks;
-
-        let blank_col = false;
-        createList(blank_col, col_name, col_color);
-
-        var listCol = document.getElementsByClassName('tasks-list');
-
-        for (let task of task_items) {
-
-            // Add task into list
-        	let task_li = createTask(task.task_title, task.task_content);
-        	listCol[i].appendChild(task_li);
-
-        }
-
-        i++;
-
-    }
-
-    // add the delete buttons after the board has been populated with content
-    // running it sooner means the lists don't exist at runtime
-    deleteList();
-    //deleteTask();
-
-    // activate Sortabel JS on all task lists
-    activateSortable();
-
-}
-
-// build out the grid if items in localStorage
-// run on page load
-populateTasks();
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', signOut);
+  }
+});

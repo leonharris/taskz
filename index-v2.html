@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Board</title>
+    <style>
+        .board {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+        }
+        .column {
+            flex: 1;
+            margin: 0 10px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+        }
+        .column-title {
+            margin-bottom: 10px;
+        }
+        .task {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .task:hover {
+            background-color: #f9f9f9;
+        }
+        .low {
+            background-color: #b3e6cc;
+        }
+        .medium {
+            background-color: #ffdd99;
+        }
+        .high {
+            background-color: #ff9999;
+        }
+        .create-task-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="board">
+        <div class="column" id="column-1">
+            <h2 class="column-title">Column 1</h2>
+            <!-- Other tasks within the column -->
+            <button class="create-task-btn">Create Task</button>
+        </div>
+        <div class="column" id="column-2">
+            <h2 class="column-title">Column 2</h2>
+            <!-- Other tasks within the column -->
+            <button class="create-task-btn">Create Task</button>
+        </div>
+        <div class="column" id="column-3">
+            <h2 class="column-title">Column 3</h2>
+            <!-- Other tasks within the column -->
+            <button class="create-task-btn">Create Task</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Retrieve tasks from localStorage or initialize an empty array
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+            // Function to render the tasks on the board
+            // Function to render the tasks on the board
+function renderTasks() {
+    const columns = document.querySelectorAll(".column");
+
+    columns.forEach(column => {
+        const columnId = column.getAttribute("id");
+        const columnElement = document.getElementById(columnId);
+
+        // Remove existing tasks within the column
+        const existingTasks = columnElement.querySelectorAll(".task");
+        existingTasks.forEach(task => task.remove());
+
+        // Filter tasks based on column ID
+        const columnTasks = tasks.filter(task => task.column === columnId);
+
+        // Append new tasks to the column
+        columnTasks.forEach(task => {
+            columnElement.appendChild(createTaskElement(task));
+        });
+
+        const createTaskBtn = column.querySelector(".create-task-btn");
+        createTaskBtn.addEventListener("click", createTaskModal);
+    });
+}
+
+
+            // Function to create a task element
+            function createTaskElement(task) {
+                const taskElement = document.createElement("div");
+                taskElement.id = task.id;
+                taskElement.className = "task " + task.priority;
+                taskElement.draggable = true;
+                taskElement.innerHTML = `
+                    <h3>${task.title}</h3>
+                    <p>${task.content}</p>
+                `;
+
+                taskElement.addEventListener("click", () => {
+                    // Change the priority level on click
+                    switch (task.priority) {
+                        case "low":
+                            task.priority = "medium";
+                            break;
+                        case "medium":
+                            task.priority = "high";
+                            break;
+                        case "high":
+                            task.priority = "low";
+                            break;
+                    }
+
+                    // Update the task in localStorage
+                    localStorage.setItem("tasks", JSON.stringify(tasks));
+
+                    // Re-render the tasks on the board
+                    renderTasks();
+                });
+
+                return taskElement;
+            }
+
+            // Function to handle drag start
+            function handleDragStart(event) {
+                event.dataTransfer.setData("text/plain", event.target.id);
+            }
+
+            // Function to handle drag over
+            function handleDragOver(event) {
+                event.preventDefault();
+            }
+
+            // Function to handle drop
+            function handleDrop(event) {
+                event.preventDefault();
+                const taskId = event.dataTransfer.getData("text/plain");
+                const taskElement = document.getElementById(taskId);
+                const columnId = event.target.getAttribute("id");
+                const columnElement = document.getElementById(columnId);
+                const task = tasks.find(task => task.id === taskId);
+                task.column = columnId;
+                columnElement.appendChild(taskElement);
+
+                // Update the task in localStorage
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+            }
+
+            // Function to handle drag end
+            function handleDragEnd(event) {
+                event.preventDefault();
+            }
+
+            // Function to save column title changes
+            function saveColumnTitle(event) {
+                const columnId = event.target.parentNode.getAttribute("id");
+                const column = tasks.find(task => task.column === columnId);
+                if (column) {
+                    column.title = event.target.innerText;
+
+                    // Update the task in localStorage
+                    localStorage.setItem("tasks", JSON.stringify(tasks));
+                }
+            }
+
+            // Function to create a new task modal
+            function createTaskModal(event) {
+                const columnId = event.target.parentNode.getAttribute("id");
+                const modal = prompt("Enter task title:");
+                if (modal) {
+                    createTask(modal, "", "low", columnId);
+                }
+            }
+
+            // Function to create a new task
+            function createTask(title, content, priority, column) {
+                const task = {
+                    id: "task-" + Date.now(),
+                    title: title,
+                    content: content,
+                    priority: priority,
+                    column: column
+                };
+
+                tasks.push(task);
+
+                // Update the tasks in localStorage
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+
+                // Re-render the tasks on the board
+                renderTasks();
+            }
+
+            // Add event listeners to columns for drag and drop functionality
+            const columns = document.querySelectorAll(".column");
+            columns.forEach(column => {
+                column.addEventListener("dragover", handleDragOver);
+                column.addEventListener("drop", handleDrop);
+            });
+
+            // Add event listeners to tasks for drag and drop functionality
+            const tasksElements = document.querySelectorAll(".task");
+            tasksElements.forEach(task => {
+                task.addEventListener("dragstart", handleDragStart);
+                task.addEventListener("dragend", handleDragEnd);
+            });
+
+            // Add event listener to column titles for saving changes
+            const columnTitles = document.querySelectorAll(".column-title");
+            columnTitles.forEach(columnTitle => {
+                columnTitle.addEventListener("input", saveColumnTitle);
+            });
+
+            // Render the tasks on the board
+            renderTasks();
+        });
+    </script>
+</body>
+</html>
