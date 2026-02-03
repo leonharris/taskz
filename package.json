@@ -8,7 +8,7 @@
     "watch:css": "sass assets/scss/main.scss assets/css/main.css --watch",
     "watch:js": "node build.js --watch",
     "watch": "npm-run-all --parallel watch:css watch:js",
-    "serve": "serve -l 3000",
+    "serve": "serve -l 3001",
     "dev": "npm-run-all --parallel watch serve"
   },
   "dependencies": {
