@@ -109,24 +109,42 @@ async function saveBoardToSupabase() {
   const boardData = getBoardData();
   if (!boardData.length) return;
 
+  console.log('Saving board data:', boardData);
+
   // Check if user already has a board
-  const { data: existingBoard } = await supabase
+  const { data: existingBoard, error: fetchError } = await supabase
     .from('boards')
     .select('id')
     .eq('user_id', currentUser.id)
     .single();
 
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Error fetching board:', fetchError);
+  }
+
   if (existingBoard) {
     // Update existing board
-    await supabase
+    const { error: updateError } = await supabase
       .from('boards')
       .update({ data: boardData, updated_at: new Date().toISOString() })
       .eq('id', existingBoard.id);
+
+    if (updateError) {
+      console.error('Error updating board:', updateError);
+    } else {
+      console.log('Board updated successfully');
+    }
   } else {
     // Insert new board
-    await supabase
+    const { error: insertError } = await supabase
       .from('boards')
       .insert({ user_id: currentUser.id, data: boardData });
+
+    if (insertError) {
+      console.error('Error inserting board:', insertError);
+    } else {
+      console.log('Board inserted successfully');
+    }
   }
 }
 
