@@ -15,7 +15,7 @@
 		<div class="auth-box">
 			<h1 class="site-title">taskz</h1>
 
-			<!-- Sign In / Sign Up view -->
+			<!-- Sign In view -->
 			<div id="auth-form-view">
 				<h2 id="auth-title">Sign In</h2>
 				<form id="auth-form">
@@ -27,43 +27,6 @@
 						<button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
 					</div>
 					<button type="submit" id="auth-submit" class="btn">Sign In</button>
-				</form>
-				<p class="auth-toggle-text">
-					<a href="#" id="auth-toggle">Don't have an account? Sign Up</a>
-				</p>
-				<p class="auth-toggle-text">
-					<a href="#" id="forgot-password-link">Forgot password?</a>
-				</p>
-			</div>
-
-			<!-- Reset password request view -->
-			<div id="reset-password-view" style="display: none;">
-				<h2>Reset Password</h2>
-				<p>Enter your email and we'll send you a reset link.</p>
-				<form id="reset-password-form">
-					<div class="form-field">
-						<input type="email" id="reset-email" placeholder="Email" required>
-					</div>
-					<button type="submit" class="btn">Send Reset Link</button>
-				</form>
-				<p class="auth-toggle-text">
-					<a href="#" id="back-to-signin">Back to Sign In</a>
-				</p>
-			</div>
-
-			<!-- New password view (shown after clicking email link) -->
-			<div id="new-password-view" style="display: none;">
-				<h2>Set New Password</h2>
-				<form id="new-password-form">
-					<div class="form-field form-field--password">
-						<input type="password" id="new-password" placeholder="New password" required minlength="6">
-						<button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
-					</div>
-					<div class="form-field form-field--password">
-						<input type="password" id="confirm-password" placeholder="Confirm password" required minlength="6">
-						<button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
-					</div>
-					<button type="submit" class="btn">Update Password</button>
 				</form>
 			</div>
 

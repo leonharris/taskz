@@ -12,26 +12,24 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Track current user
 let currentUser = null;
-// Detect password recovery from URL hash before anything else runs
-let isPasswordRecovery = window.location.hash.includes('type=recovery');
 
 /*
 * Supabase Authentication Functions
 */
 
-// Sign up with email/password
-async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-  if (error) {
-    alert('Error signing up: ' + error.message);
-    return null;
-  }
-  alert('Check your email for the confirmation link!');
-  return data;
-}
+// Sign up with email/password (disabled — UI removed, kept for future use)
+// async function signUp(email, password) {
+//   const { data, error } = await supabase.auth.signUp({
+//     email,
+//     password,
+//   });
+//   if (error) {
+//     alert('Error signing up: ' + error.message);
+//     return null;
+//   }
+//   alert('Check your email for the confirmation link!');
+//   return data;
+// }
 
 // Sign in with email/password
 async function signIn(email, password) {
@@ -55,6 +53,15 @@ async function signOut() {
   currentUser = null;
   updateAuthUI();
   document.getElementById('board').innerHTML = '';
+
+  // Remove Supabase session from localStorage so a refresh won't restore it
+  // (signOut() sometimes hangs and never actually clears the stored token)
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+      localStorage.removeItem(key);
+    }
+  }
+
   supabase.auth.signOut().catch(function() {});
 }
 
@@ -78,21 +85,19 @@ function updateAuthUI() {
 supabase.auth.onAuthStateChange(async (event, session) => {
   currentUser = session?.user || null;
 
-  if (event === 'PASSWORD_RECOVERY') {
-    // User clicked the reset link in their email — show new password form
-    isPasswordRecovery = true;
-    const authContainer = document.getElementById('auth-container');
-    const authFormView = document.getElementById('auth-form-view');
-    const newPasswordView = document.getElementById('new-password-view');
-    authContainer.style.display = 'flex';
-    if (authFormView) authFormView.style.display = 'none';
-    if (newPasswordView) newPasswordView.style.display = 'block';
-    document.getElementById('app-content').style.display = 'none';
-    return;
-  }
-
-  // Don't switch to app view while user is setting a new password
-  if (isPasswordRecovery) return;
+  // Password recovery handler (disabled — UI removed, kept for future use)
+  // if (event === 'PASSWORD_RECOVERY') {
+  //   isPasswordRecovery = true;
+  //   const authContainer = document.getElementById('auth-container');
+  //   const authFormView = document.getElementById('auth-form-view');
+  //   const newPasswordView = document.getElementById('new-password-view');
+  //   authContainer.style.display = 'flex';
+  //   if (authFormView) authFormView.style.display = 'none';
+  //   if (newPasswordView) newPasswordView.style.display = 'block';
+  //   document.getElementById('app-content').style.display = 'none';
+  //   return;
+  // }
+  // if (isPasswordRecovery) return;
 
   updateAuthUI();
 
@@ -104,9 +109,6 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
 // Check initial auth state
 async function checkAuth() {
-  // Skip if we're in password recovery flow — let onAuthStateChange handle it
-  if (isPasswordRecovery) return;
-
   const { data: { session } } = await supabase.auth.getSession();
   currentUser = session?.user || null;
   updateAuthUI();
@@ -535,20 +537,8 @@ console.log('Taskz loaded. Debug with window.taskzDebug');
 */
 
 const authForm = document.getElementById('auth-form');
-const authToggle = document.getElementById('auth-toggle');
-const authSubmit = document.getElementById('auth-submit');
-const authTitle = document.getElementById('auth-title');
-const forgotPasswordLink = document.getElementById('forgot-password-link');
-const resetPasswordForm = document.getElementById('reset-password-form');
-const resetPasswordView = document.getElementById('reset-password-view');
-const authFormView = document.getElementById('auth-form-view');
-const backToSignIn = document.getElementById('back-to-signin');
-const newPasswordView = document.getElementById('new-password-view');
-const newPasswordForm = document.getElementById('new-password-form');
 
-let isSignUp = false;
-
-// Password visibility toggles
+// Password visibility toggle
 document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
   btn.addEventListener('click', function() {
     const input = btn.previousElementSibling;
@@ -558,29 +548,13 @@ document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
   });
 });
 
-// Toggle between Sign In and Sign Up
-if (authToggle) {
-  authToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    isSignUp = !isSignUp;
-    authTitle.textContent = isSignUp ? 'Sign Up' : 'Sign In';
-    authSubmit.textContent = isSignUp ? 'Sign Up' : 'Sign In';
-    authToggle.textContent = isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
-  });
-}
-
-// Sign In / Sign Up form submit
+// Sign In form submit
 if (authForm) {
   authForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
-
-    if (isSignUp) {
-      await signUp(email, password);
-    } else {
-      await signIn(email, password);
-    }
+    await signIn(email, password);
   });
 }
 
@@ -591,62 +565,83 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Forgot password — show reset view
-if (forgotPasswordLink) {
-  forgotPasswordLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    authFormView.style.display = 'none';
-    resetPasswordView.style.display = 'block';
-  });
-}
-
-// Back to sign in from reset view
-if (backToSignIn) {
-  backToSignIn.addEventListener('click', function(e) {
-    e.preventDefault();
-    resetPasswordView.style.display = 'none';
-    authFormView.style.display = 'block';
-  });
-}
-
-// Reset password form submit
-if (resetPasswordForm) {
-  resetPasswordForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('reset-email').value;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
-    });
-    if (error) {
-      alert('Error: ' + error.message);
-    } else {
-      alert('Check your email for the password reset link!');
-      resetPasswordView.style.display = 'none';
-      authFormView.style.display = 'block';
-    }
-  });
-}
-
-// New password form submit (after clicking email link)
-if (newPasswordForm) {
-  newPasswordForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
-
-    if (newPassword !== confirmPassword) {
-      alert('Passwords do not match.');
-      return;
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      alert('Error updating password: ' + error.message);
-    } else {
-      alert('Password updated successfully!');
-      isPasswordRecovery = false;
-      newPasswordView.style.display = 'none';
-      updateAuthUI();
-    }
-  });
-}
+// Sign-up & password reset handlers (disabled — UI removed, kept for future use)
+// let isSignUp = false;
+// const authToggle = document.getElementById('auth-toggle');
+// const authSubmit = document.getElementById('auth-submit');
+// const authTitle = document.getElementById('auth-title');
+// const forgotPasswordLink = document.getElementById('forgot-password-link');
+// const resetPasswordForm = document.getElementById('reset-password-form');
+// const resetPasswordView = document.getElementById('reset-password-view');
+// const authFormView = document.getElementById('auth-form-view');
+// const backToSignIn = document.getElementById('back-to-signin');
+// const newPasswordView = document.getElementById('new-password-view');
+// const newPasswordForm = document.getElementById('new-password-form');
+//
+// if (authToggle) {
+//   authToggle.addEventListener('click', function(e) {
+//     e.preventDefault();
+//     isSignUp = !isSignUp;
+//     authTitle.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+//     authSubmit.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+//     authToggle.textContent = isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
+//   });
+// }
+//
+// if (forgotPasswordLink) {
+//   forgotPasswordLink.addEventListener('click', function(e) {
+//     e.preventDefault();
+//     authFormView.style.display = 'none';
+//     resetPasswordView.style.display = 'block';
+//   });
+// }
+//
+// if (backToSignIn) {
+//   backToSignIn.addEventListener('click', function(e) {
+//     e.preventDefault();
+//     resetPasswordView.style.display = 'none';
+//     authFormView.style.display = 'block';
+//   });
+// }
+//
+// if (resetPasswordForm) {
+//   resetPasswordForm.addEventListener('submit', async function(e) {
+//     e.preventDefault();
+//     const email = document.getElementById('reset-email').value;
+//     const { error } = await supabase.auth.resetPasswordForEmail(email, {
+//       redirectTo: window.location.origin,
+//     });
+//     if (error) {
+//       alert('Error: ' + error.message);
+//     } else {
+//       alert('If an account with that email exists, a password reset link has been sent.');
+//       resetPasswordView.style.display = 'none';
+//       authFormView.style.display = 'block';
+//     }
+//   });
+// }
+//
+// if (newPasswordForm) {
+//   newPasswordForm.addEventListener('submit', async function(e) {
+//     e.preventDefault();
+//     const newPassword = document.getElementById('new-password').value;
+//     const confirmPassword = document.getElementById('confirm-password').value;
+//     if (newPassword.length < 6) {
+//       alert('Password must be at least 6 characters.');
+//       return;
+//     }
+//     if (newPassword !== confirmPassword) {
+//       alert('Passwords do not match.');
+//       return;
+//     }
+//     const { error } = await supabase.auth.updateUser({ password: newPassword });
+//     if (error) {
+//       alert('Error updating password: ' + error.message);
+//     } else {
+//       alert('Password updated successfully!');
+//       isPasswordRecovery = false;
+//       newPasswordView.style.display = 'none';
+//       updateAuthUI();
+//     }
+//   });
+// }
