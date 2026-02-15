@@ -394,7 +394,7 @@ nav {
 }
 @media only screen and (min-width: 600px) {
   .site-container {
-    padding: calc(70px - 2vw) 2vw 2vw;
+    padding: calc(70px + 2vw) 2vw 2vw;
     height: 100vh;
   }
 }
