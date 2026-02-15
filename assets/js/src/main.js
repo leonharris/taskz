@@ -182,22 +182,32 @@ async function saveBoardToSupabase() {
 async function loadBoardFromSupabase() {
   if (!currentUser) return;
 
-  const { data: board, error } = await supabase
-    .from('boards')
-    .select('data')
-    .eq('user_id', currentUser.id)
-    .single();
+  try {
+    console.log('Loading board for user:', currentUser.id);
+    const { data: board, error } = await supabase
+      .from('boards')
+      .select('data')
+      .eq('user_id', currentUser.id)
+      .single();
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error loading board:', error);
-    return;
-  }
+    console.log('Load result:', { board, error });
 
-  if (board && board.data) {
-    // Clear existing board
-    document.getElementById('board').innerHTML = '';
-    // Populate from Supabase data
-    populateTasksFromData(board.data);
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error loading board:', error);
+      return;
+    }
+
+    if (board && board.data) {
+      console.log('Populating board with', board.data.length, 'columns');
+      // Clear existing board
+      document.getElementById('board').innerHTML = '';
+      // Populate from Supabase data
+      populateTasksFromData(board.data);
+    } else {
+      console.log('No board data found');
+    }
+  } catch (err) {
+    console.error('loadBoardFromSupabase threw:', err);
   }
 }
 
