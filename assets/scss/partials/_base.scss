@@ -1,18 +1,34 @@
 // utopia https://utopia.fyi/type/calculator?c=420,16,1.2,1240,18,1.25,5,2,&s=0.75,1.5|2|3|4|6,s-l&g=s,l,xl,12
 
 :root {
-  --color-primary: #000;
-  --color-primary-dark: #222;
-  --color-white: #fff;
-  --color-black: #000;
-  --color-text: #777;
-  --color-headers: #333;
-  --status-color: #000;
+  // Dark theme palette
+  --color-primary: #4ecdc4;
+  --color-primary-dark: #3db8b0;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-text: #9ca3b4;
+  --color-text-muted: #6b7280;
+  --color-headers: #e2e8f0;
+  --status-color: #4ecdc4;
+
+  // Surfaces
+  --pg-bg: #111827;
+  --surface-1: #1e2536;
+  --surface-2: #252d3f;
+  --surface-3: #2a3349;
+  --surface-raised: #1a2234;
+
+  // Borders
+  --border-color: #2d3748;
+  --border-color-light: #374151;
+
+  // Navbar
+  --navbar-bg: #0f1623;
+
   --font-sans: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  //--pg-bg: #f8f4f0;
-  --pg-bg: #fff3f3;
   --border-radius: 10px;
+  --border-radius-sm: 6px;
 
   --step--2: clamp(0.69rem, calc(0.68rem + 0.05vw), 0.72rem);
   --step--1: clamp(0.83rem, calc(0.80rem + 0.13vw), 0.90rem);

@@ -1,15 +1,17 @@
 /* Modals
 ---------------------------------------------*/
 .modal {
-  background-color: white;
+  background-color: var(--surface-1);
   min-width: 400px;
   display: none;
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  border-radius: 15px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
   overflow: hidden;
+  z-index: 200;
 }
 
 .show-modal {
@@ -19,7 +21,7 @@
   .notice,
   .site-container,
   .site-footer {
-    filter: blur(1px);
+    filter: blur(2px);
   }
 }
 
@@ -30,7 +32,8 @@
   left: 0;
   height: 100%;
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 150;
 }
 
 .show-modal .underlay {
@@ -55,12 +58,21 @@
   height: 50px;
   display: flex;
   align-items: center;
+  transition: opacity 0.15s ease;
   img {
     width: 20px;
     height: 20px;
+    filter: invert(1);
+  }
+  &:hover {
+    opacity: 0.7;
   }
 }
 
 .modal--header {
   margin-bottom: 20px;
+
+  h2 {
+    color: var(--color-headers);
+  }
 }

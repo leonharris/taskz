@@ -131,40 +131,50 @@ async function saveBoardToSupabase() {
 
   console.log('Saving board data:', boardData);
 
-  // Check if user already has a board
-  const { data: existingBoard, error: fetchError } = await supabase
-    .from('boards')
-    .select('id')
-    .eq('user_id', currentUser.id)
-    .single();
-
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    console.error('Error fetching board:', fetchError);
-  }
-
-  if (existingBoard) {
-    // Update existing board
-    const { error: updateError } = await supabase
+  try {
+    // Check if user already has a board
+    console.log('Fetching existing board for user:', currentUser.id);
+    const { data: existingBoard, error: fetchError } = await supabase
       .from('boards')
-      .update({ data: boardData, updated_at: new Date().toISOString() })
-      .eq('id', existingBoard.id);
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .single();
 
-    if (updateError) {
-      console.error('Error updating board:', updateError);
-    } else {
-      console.log('Board updated successfully');
-    }
-  } else {
-    // Insert new board
-    const { error: insertError } = await supabase
-      .from('boards')
-      .insert({ user_id: currentUser.id, data: boardData });
+    console.log('Fetch result:', { existingBoard, fetchError });
 
-    if (insertError) {
-      console.error('Error inserting board:', insertError);
-    } else {
-      console.log('Board inserted successfully');
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching board:', fetchError);
+      return;
     }
+
+    if (existingBoard) {
+      // Update existing board
+      console.log('Updating board:', existingBoard.id);
+      const { error: updateError } = await supabase
+        .from('boards')
+        .update({ data: boardData, updated_at: new Date().toISOString() })
+        .eq('id', existingBoard.id);
+
+      if (updateError) {
+        console.error('Error updating board:', updateError);
+      } else {
+        console.log('Board updated successfully');
+      }
+    } else {
+      // Insert new board
+      console.log('Inserting new board');
+      const { error: insertError } = await supabase
+        .from('boards')
+        .insert({ user_id: currentUser.id, data: boardData });
+
+      if (insertError) {
+        console.error('Error inserting board:', insertError);
+      } else {
+        console.log('Board inserted successfully');
+      }
+    }
+  } catch (err) {
+    console.error('saveBoardToSupabase threw:', err);
   }
 }
 
