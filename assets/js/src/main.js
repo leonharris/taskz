@@ -83,15 +83,14 @@ function updateAuthUI() {
 }
 
 // Listen for auth state changes
-supabase.auth.onAuthStateChange(async (event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state change:', event);
   currentUser = session?.user || null;
   updateAuthUI();
 
-  if (currentUser && !boardLoaded) {
-    boardLoaded = true;
-    await loadBoardFromSupabase();
-  } else if (!currentUser) {
+  // Don't await DB calls here — it deadlocks the Supabase client.
+  // Board loading is handled by checkAuth().
+  if (!currentUser) {
     boardLoaded = false;
   }
 });
