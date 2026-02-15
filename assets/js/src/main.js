@@ -12,6 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Track current user
 let currentUser = null;
+let boardLoaded = false;
 
 /*
 * Supabase Authentication Functions
@@ -83,27 +84,15 @@ function updateAuthUI() {
 
 // Listen for auth state changes
 supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth state change:', event);
   currentUser = session?.user || null;
-
-  // Password recovery handler (disabled — UI removed, kept for future use)
-  // if (event === 'PASSWORD_RECOVERY') {
-  //   isPasswordRecovery = true;
-  //   const authContainer = document.getElementById('auth-container');
-  //   const authFormView = document.getElementById('auth-form-view');
-  //   const newPasswordView = document.getElementById('new-password-view');
-  //   authContainer.style.display = 'flex';
-  //   if (authFormView) authFormView.style.display = 'none';
-  //   if (newPasswordView) newPasswordView.style.display = 'block';
-  //   document.getElementById('app-content').style.display = 'none';
-  //   return;
-  // }
-  // if (isPasswordRecovery) return;
-
   updateAuthUI();
 
-  if (currentUser) {
-    // Load user's board from Supabase
+  if (currentUser && !boardLoaded) {
+    boardLoaded = true;
     await loadBoardFromSupabase();
+  } else if (!currentUser) {
+    boardLoaded = false;
   }
 });
 
@@ -113,7 +102,8 @@ async function checkAuth() {
   currentUser = session?.user || null;
   updateAuthUI();
 
-  if (currentUser) {
+  if (currentUser && !boardLoaded) {
+    boardLoaded = true;
     await loadBoardFromSupabase();
   }
 }
