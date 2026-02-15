@@ -89,8 +89,10 @@ supabase.auth.onAuthStateChange((event, session) => {
   updateAuthUI();
 
   // Don't await DB calls here — it deadlocks the Supabase client.
-  // Board loading is handled by checkAuth().
-  if (!currentUser) {
+  if (currentUser && !boardLoaded) {
+    boardLoaded = true;
+    loadBoardFromSupabase(); // fire-and-forget (no await)
+  } else if (!currentUser) {
     boardLoaded = false;
   }
 });
