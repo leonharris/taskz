@@ -158,7 +158,6 @@ button {
 	transition: opacity 0.2s ease;
 	margin-top: 8px;
 	padding-top: 8px;
-	border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .btn-delete-task {
@@ -348,27 +347,42 @@ nav {
 	margin-right: 8px;
 }
 
-.status-column--footer {
-	@media only screen and (max-width: 599px) {
-		display: flex;
-		justify-content: space-between;
-	}
-	margin-top: 16px;
-	> * {
-		margin: 8px 0;
-	}
-	button {
-		margin-bottom: 8px;
-		font-weight: 500;
-		color: var(--color-text-muted);
-		font-size: var(--step--1);
+.btn-add-task-wrap {
+	margin-bottom: 12px;
+
+	.btn-add-task {
+		width: 100%;
 		display: flex;
 		align-items: center;
+		gap: 8px;
+		padding: 10px 16px;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: var(--border-radius-pill);
+		color: var(--color-text-muted);
+		font-size: 0.8rem;
+		font-weight: 500;
 		transition: all 0.2s ease;
+		cursor: pointer;
+
+		svg {
+			width: 14px;
+			height: 14px;
+			flex-shrink: 0;
+			path {
+				fill: var(--color-text-muted);
+				transition: fill 0.2s ease;
+			}
+		}
 
 		&:hover {
-			color: var(--color-primary);
-			transform: translateX(2px);
+			background: rgba(255, 255, 255, 0.08);
+			border-color: rgba(255, 255, 255, 0.14);
+			color: var(--color-headers);
+
+			svg path {
+				fill: var(--color-headers);
+			}
 		}
 	}
 }
@@ -387,7 +401,7 @@ nav {
 	-webkit-backdrop-filter: blur(16px);
 	margin-bottom: 10px;
 	padding: 18px 18px 14px;
-	border: 1px solid rgba(255, 255, 255, 0.08);
+
 	border-left: 3px solid var(--status-color);
 	border-top: 1px solid rgba(255, 255, 255, 0.12);
 	cursor: grab;

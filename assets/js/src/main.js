@@ -13,6 +13,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Track current user
 let currentUser = null;
 let boardLoaded = false;
+let boardDirty = false;
+
+function markDirty() {
+  boardDirty = true;
+}
 
 /*
 * Supabase Authentication Functions
@@ -261,7 +266,6 @@ function populateTasksFromData(tasks) {
 		i++;
 	}
 
-	deleteList();
 	activateSortable();
 }
 
@@ -286,6 +290,7 @@ function activateSortable() {
 		new Sortable(ul, {
 			animation: 300,
 			group: 'task-list',
+			onSort: markDirty,
 			store: {
 				get: (sortable) => {
 					const order = localStorage.getItem(sortable.options.group.name);
@@ -313,13 +318,16 @@ document.getElementById("form--add-list").addEventListener("submit", (event) => 
 	event.preventDefault();
 	getStatusFormData(event.target);
 	closeModal();
+	markDirty();
 });
 
 
 // Add task on "add task" button click
 document.addEventListener('click', (e) => {
-	if (e.target.classList.contains('btn-add-task')) {
-		const taskListUL = e.target.parentNode.parentNode.previousSibling;
+	const btn = e.target.closest('.btn-add-task');
+	if (btn) {
+		const column = btn.closest('.status-column');
+		const taskListUL = column.querySelector('.tasks-list');
 		const emptyTask = createTask("", "");
 		taskListUL.appendChild(emptyTask);
 		openTaskDetailModal(emptyTask);
@@ -416,6 +424,7 @@ function createList(blank_col, column_title, column_color) {
 	const title_text = document.createTextNode(column_title);
 	header_text.appendChild(title_text);
 	header_text.contentEditable = "true";
+	header_text.addEventListener('input', markDirty);
 	column_header.appendChild(header_text);
 
 	// Edit list button
@@ -426,6 +435,12 @@ function createList(blank_col, column_title, column_color) {
 
 	// add the html into the list <header>
 	column_inner.appendChild(column_header);
+
+	// Add task button (between header and task list)
+	let btn_add_task = document.createElement("div");
+	btn_add_task.classList.add('btn-add-task-wrap');
+	btn_add_task.innerHTML = '<button class="btn-add-task"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M432 256C432 264.8 424.8 272 416 272h-176V448c0 8.844-7.156 16.01-16 16.01S208 456.8 208 448V272H32c-8.844 0-16-7.15-16-15.99C16 247.2 23.16 240 32 240h176V64c0-8.844 7.156-15.99 16-15.99S240 55.16 240 64v176H416C424.8 240 432 247.2 432 256z"/></svg> Add task</button>';
+	column_inner.appendChild(btn_add_task);
 
 	const task_list = document.createElement("ul");
 	task_list.classList.add('tasks-list');
@@ -438,24 +453,6 @@ function createList(blank_col, column_title, column_color) {
 		task_list.appendChild(empty_task);
 	}
 
-	// Add status column footer
-	let column_footer = document.createElement("footer");
-	column_footer.classList.add('status-column--footer');
-	column_inner.appendChild(column_footer);
-
-
-	// Add task button
-	let btn_add_task = document.createElement("div");
-	btn_add_task.classList.add('btn-wrap');
-	btn_add_task.innerHTML = '<button class="btn-action btn-add-task"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M432 256C432 264.8 424.8 272 416 272h-176V448c0 8.844-7.156 16.01-16 16.01S208 456.8 208 448V272H32c-8.844 0-16-7.15-16-15.99C16 247.2 23.16 240 32 240h176V64c0-8.844 7.156-15.99 16-15.99S240 55.16 240 64v176H416C424.8 240 432 247.2 432 256z"/></svg> Add task</button>';
-	column_footer.appendChild(btn_add_task);
-
-	// Delete list button
-	let btn_delete_list = document.createElement("div");
-	btn_delete_list.classList.add('btn-wrap');
-	btn_delete_list.innerHTML = '<button class="btn-action btn-delete-list"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M432 64C440.8 64 448 71.16 448 80C448 88.84 440.8 96 432 96H413.7L388.2 452.6C385.9 486.1 357.1 512 324.4 512H123.6C90.01 512 62.15 486.1 59.75 452.6L34.29 96H16C7.164 96 0 88.84 0 80C0 71.16 7.164 64 16 64H111.1L137 22.56C145.8 8.526 161.2 0 177.7 0H270.3C286.8 0 302.2 8.526 310.1 22.56L336.9 64H432zM177.7 32C172.2 32 167.1 34.84 164.2 39.52L148.9 64H299.1L283.8 39.52C280.9 34.84 275.8 32 270.3 32H177.7zM381.6 96H66.37L91.67 450.3C92.87 467 106.8 480 123.6 480H324.4C341.2 480 355.1 467 356.3 450.3L381.6 96z"/></svg> Delete category</button>';
-	column_footer.appendChild(btn_delete_list);
-
 	board.appendChild(column);
 
 	// SortableJS — column reordering (separate group from task lists)
@@ -463,13 +460,13 @@ function createList(blank_col, column_title, column_color) {
 		animation: 300,
 		handle: '.handle',
 		draggable: '.status-column',
+		onSort: markDirty,
 	})
 
 	// clear input fields after adding a new list
 	//todoInput.value = "";
 
 	//deleteList();
-	deleteTask();
 
 }
 
@@ -478,36 +475,20 @@ function createList(blank_col, column_title, column_color) {
 * Delete buttons
 ------------------------------------------- */
 
-// Delete list
-function deleteList() {
-	let delete_list_btn = document.querySelectorAll('.btn-delete-list');
-	delete_list_btn.forEach(function (el) {
-		el.addEventListener('click', function (e) {
-			let parentList = el.closest('.status-column');
-			let confirmation = confirm("Are you sure you want to delete this category?");
-			if (confirmation == true) {
-				parentList.remove();
-			}
-		})
-	});
-}
 
-
-// Delete task
-function deleteTask() {
-	let deleteButtons = document.querySelectorAll('.btn-delete-task');
-	deleteButtons.forEach(function (button) {
-		button.addEventListener('click', function () {
-			let parentTask = button.closest('.task');
-			if (parentTask) {
-				let confirmation = confirm("Are you sure you want to delete this task?");
-				if (confirmation) {
-					parentTask.remove();
-				}
-			}
-		});
-	});
-}
+// Delete task (event delegation)
+document.getElementById('board').addEventListener('click', (e) => {
+	const btn = e.target.closest('.btn-delete-task');
+	if (!btn) return;
+	const parentTask = btn.closest('.task');
+	if (parentTask) {
+		let confirmation = confirm("Are you sure you want to delete this task?");
+		if (confirmation) {
+			parentTask.remove();
+			markDirty();
+		}
+	}
+});
 
 
 // Modals
@@ -628,6 +609,7 @@ taskDetailForm.addEventListener('submit', (e) => {
 		targetList.appendChild(activeTask);
 	}
 
+	markDirty();
 	closeTaskDetailModal();
 });
 
@@ -635,10 +617,10 @@ taskDetailForm.addEventListener('submit', (e) => {
 /* Data Persistence
 ---------------------------------------------------- */
 
-// Auto-save to Supabase every 5 seconds (if logged in)
+// Auto-save to Supabase every 5 seconds (if logged in and board changed)
 const saveInterval = setInterval(function () {
-	console.log('Auto-save check - User:', currentUser ? currentUser.email : 'not logged in');
-	if (currentUser) {
+	if (currentUser && boardDirty) {
+		boardDirty = false;
 		saveBoardToSupabase();
 	}
 }, 5000);
