@@ -219,13 +219,14 @@ function getBoardData() {
 
 		for (let task of tasks) {
 			let task_title_el = task.getElementsByClassName('task--title');
-			let task__title = task_title_el[0].innerHTML;
+			let task__title = task_title_el[0].textContent;
 			let task_content_el = task.getElementsByClassName('task--content');
-			let task__content = task_content_el[0].innerHTML;
+			let task__content = task_content_el[0].textContent;
 			task_data.push({
 				id: ii,
 				task_title: task__title,
-				task_content: task__content
+				task_content: task__content,
+				priority: task.dataset.priority || 'none'
 			});
 			ii++;
 		}
@@ -254,7 +255,7 @@ function populateTasksFromData(tasks) {
 		var listCol = document.getElementsByClassName('tasks-list');
 
 		for (let task of task_items) {
-			let task_li = createTask(task.task_title, task.task_content);
+			let task_li = createTask(task.task_title, task.task_content, task.priority);
 			listCol[i].appendChild(task_li);
 		}
 		i++;
@@ -311,7 +312,7 @@ function getStatusFormData(form) {
 document.getElementById("form--add-list").addEventListener("submit", (event) => {
 	event.preventDefault();
 	getStatusFormData(event.target);
-	document.body.classList.remove('show-modal');
+	closeModal();
 });
 
 
@@ -321,6 +322,7 @@ document.addEventListener('click', (e) => {
 		const taskListUL = e.target.parentNode.parentNode.previousSibling;
 		const emptyTask = createTask("", "");
 		taskListUL.appendChild(emptyTask);
+		openTaskDetailModal(emptyTask);
 	}
 });
 
@@ -330,29 +332,29 @@ document.addEventListener('click', (e) => {
 * Create task
 */
 
-function createTask(task_title, task_content) {
+function createTask(task_title, task_content, task_priority) {
 
 	// create task data
 	let title_content = task_title ? task_title : "Task title";
-	let content_content = task_content ? task_content : "Task content";
+	let content_content = task_content ? task_content : "";
+	let priority = task_priority || "none";
 
 	// create task <li>
 	let task_li = document.createElement("li");
 	task_li.classList.add('task');
+	task_li.dataset.priority = priority;
 
-	// Create Tags (Mock based on demo)
-	let tags_div = document.createElement("div");
-	tags_div.classList.add('task--tags');
-	// Random mock tag for visual demo compliance
-	const mockTags = ['Design', 'Dev', 'Urgent', 'Marketing'];
-	const randomTag = mockTags[Math.floor(Math.random() * mockTags.length)];
-	tags_div.innerHTML = `<span class="task--tag">${randomTag}</span>`;
-	task_li.appendChild(tags_div);
+	// Priority badge
+	if (priority && priority !== "none") {
+		let priority_div = document.createElement("div");
+		priority_div.classList.add('task--tags');
+		priority_div.innerHTML = `<span class="task--tag task--tag-${priority}">${priority}</span>`;
+		task_li.appendChild(priority_div);
+	}
 
 	// create task title
 	let task_header = document.createElement("h3");
 	task_header.classList.add('task--title');
-	task_header.contentEditable = "true";
 	let task_header_content = document.createTextNode(title_content);
 	task_header.appendChild(task_header_content);
 	task_li.appendChild(task_header);
@@ -360,24 +362,9 @@ function createTask(task_title, task_content) {
 	// create task content
 	let task_content_div = document.createElement("div");
 	task_content_div.classList.add('task--content');
-	task_content_div.contentEditable = "true";
 	let task_content_text = document.createTextNode(content_content);
 	task_content_div.appendChild(task_content_text);
 	task_li.appendChild(task_content_div);
-
-	// Footer with avatar (Mock)
-	let task_footer = document.createElement("div");
-	task_footer.style.display = "flex";
-	task_footer.style.justifyContent = "space-between";
-	task_footer.style.marginTop = "12px";
-	task_footer.style.alignItems = "center";
-	task_footer.innerHTML = `
-        <div style="display:flex; gap: -4px;">
-            <div style="width:24px; height:24px; border-radius:50%; background:#4fd1c5; border:2px solid #1a1a1a;"></div>
-        </div>
-        <div style="font-size:10px; color:var(--color-text-muted);">Feb 24</div>
-    `;
-	task_li.appendChild(task_footer);
 
 	// Delete task button
 	let btn_delete_task = document.createElement("div");
@@ -419,13 +406,11 @@ function createList(blank_col, column_title, column_color) {
 	header_handle.classList.add('handle');
 	column_header.appendChild(header_handle);
 
-	// Mock Icon (Smile Well style)
-	let header_icon = document.createElement("span");
-	header_icon.style.marginRight = "8px";
-	header_icon.style.display = "flex";
-	header_icon.style.opacity = "0.7";
-	header_icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>';
-	column_header.appendChild(header_icon);
+	// Colored dot indicator
+	let header_dot = document.createElement("span");
+	header_dot.classList.add('status-dot');
+	header_dot.style.backgroundColor = column_color;
+	column_header.appendChild(header_dot);
 
 	let header_text = document.createElement("span");
 	const title_text = document.createTextNode(column_title);
@@ -473,11 +458,11 @@ function createList(blank_col, column_title, column_color) {
 
 	board.appendChild(column);
 
-	// SortableJS
+	// SortableJS — column reordering (separate group from task lists)
 	new Sortable(board, {
 		animation: 300,
 		handle: '.handle',
-		group: 'task-list',
+		draggable: '.status-column',
 	})
 
 	// clear input fields after adding a new list
@@ -527,6 +512,7 @@ function deleteTask() {
 
 // Modals
 
+const addListModal = document.getElementById('modal--add-list');
 const addListButton = document.querySelector('#add-list'); // add list button
 const closeModalButton = document.querySelector('#close-modal');
 
@@ -536,18 +522,114 @@ closeModalButton.addEventListener("click", closeModal);
 
 // Open modal
 function openModal() {
-	document.body.classList.add('show-modal');
+	addListModal.classList.add('is-visible');
 }
 // Close modal
 function closeModal() {
-	document.body.classList.remove('show-modal');
+	addListModal.classList.remove('is-visible');
 }
-// Close modal - underlay click
-document.querySelector('.underlay').addEventListener('click', e => {
-	document.body.classList.remove('show-modal')
+// Close modal on backdrop click
+addListModal.addEventListener('click', (e) => {
+	if (e.target === addListModal) {
+		closeModal();
+	}
 })
 
 
+/*
+* Task Detail Modal
+*/
+const taskDetailModal = document.getElementById('modal--task-detail');
+const taskDetailForm = document.getElementById('form--task-detail');
+const taskDetailTitle = document.getElementById('task-detail-title');
+const taskDetailStatus = document.getElementById('task-detail-status');
+const taskDetailPriority = document.getElementById('task-detail-priority');
+const taskDetailDescription = document.getElementById('task-detail-description');
+let activeTask = null; // the <li> currently being edited
+
+// Open task detail modal on task click (event delegation)
+document.getElementById('board').addEventListener('click', (e) => {
+	const taskEl = e.target.closest('.task');
+	if (!taskEl) return;
+	// Don't open modal if clicking delete button
+	if (e.target.closest('.btn-delete-task-wrap')) return;
+	openTaskDetailModal(taskEl);
+});
+
+function openTaskDetailModal(taskEl) {
+	activeTask = taskEl;
+
+	// Populate fields from the task DOM
+	taskDetailTitle.value = taskEl.querySelector('.task--title').textContent;
+	taskDetailDescription.value = taskEl.querySelector('.task--content').textContent;
+	taskDetailPriority.value = taskEl.dataset.priority || 'none';
+
+	// Populate status dropdown with current columns
+	taskDetailStatus.innerHTML = '';
+	const columns = document.querySelectorAll('.status-column');
+	const currentColumn = taskEl.closest('.status-column');
+	columns.forEach((col) => {
+		const name = col.querySelector('.status-column--header span[contenteditable]').textContent;
+		const option = document.createElement('option');
+		option.value = col.id;
+		option.textContent = name;
+		if (col === currentColumn) option.selected = true;
+		taskDetailStatus.appendChild(option);
+	});
+
+	taskDetailModal.classList.add('is-visible');
+}
+
+function closeTaskDetailModal() {
+	taskDetailModal.classList.remove('is-visible');
+	activeTask = null;
+}
+
+// Close button
+document.querySelector('.modal--close-task').addEventListener('click', closeTaskDetailModal);
+
+// Backdrop click
+taskDetailModal.addEventListener('click', (e) => {
+	if (e.target === taskDetailModal) closeTaskDetailModal();
+});
+
+// Save task on form submit
+taskDetailForm.addEventListener('submit', (e) => {
+	e.preventDefault();
+	if (!activeTask) return;
+
+	// Update task title
+	activeTask.querySelector('.task--title').textContent = taskDetailTitle.value;
+
+	// Update task content
+	activeTask.querySelector('.task--content').textContent = taskDetailDescription.value;
+
+	// Update priority
+	const newPriority = taskDetailPriority.value;
+	activeTask.dataset.priority = newPriority;
+	// Update or create priority tag
+	let tagsDiv = activeTask.querySelector('.task--tags');
+	if (newPriority && newPriority !== 'none') {
+		if (!tagsDiv) {
+			tagsDiv = document.createElement('div');
+			tagsDiv.classList.add('task--tags');
+			activeTask.insertBefore(tagsDiv, activeTask.firstChild);
+		}
+		tagsDiv.innerHTML = `<span class="task--tag task--tag-${newPriority}">${newPriority}</span>`;
+	} else if (tagsDiv) {
+		tagsDiv.remove();
+	}
+
+	// Move task to new column if status changed
+	const targetColumnId = taskDetailStatus.value;
+	const currentColumn = activeTask.closest('.status-column');
+	if (currentColumn && currentColumn.id !== targetColumnId) {
+		const targetList = document.getElementById(targetColumnId).querySelector('.tasks-list');
+		targetList.appendChild(activeTask);
+	}
+
+	closeTaskDetailModal();
+});
 
 
 /* Data Persistence

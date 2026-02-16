@@ -43,12 +43,18 @@
 		<div id="app-content" class="site-container" style="display: none;">
 
 			<div class="app-navbar">
-				<h1 class="site-title">taskz</h1>
-				<span id="user-email" class="user-email"></span>
-				<button id="btn-settings"></button>
-				<button id="btn-info"></button>
-				<button id="sign-out-btn" class="btn btn-secondary">Sign Out</button>
-				<button id="add-list" class="btn">New category</button>
+				<div class="app-navbar--left">
+					<h1 class="site-title">taskz</h1>
+				</div>
+				<div class="app-navbar--right">
+					<span id="user-email" class="user-email"></span>
+					<div class="app-navbar--actions">
+						<button id="btn-settings" title="Settings"></button>
+						<button id="btn-info" title="Info"></button>
+					</div>
+					<button id="sign-out-btn" class="btn btn-secondary">Sign Out</button>
+					<button id="add-list" class="btn">New category</button>
+				</div>
 			</div>
 
 			<!--
@@ -82,6 +88,41 @@
 						<div id="color-picker"></div>
 					</div>
 					<button type="submit" class="btn">Create category</button>
+				</form>
+			</div>
+		</modal>
+
+		<modal id="modal--task-detail" class="modal task-detail">
+			<button class="btn modal--close modal--close-task"><img src="assets/icons/xmark-solid.svg"></button>
+			<div class="modal--wrap">
+				<div class="modal--header">
+					<h2 class="modal--title">Edit task</h2>
+				</div>
+				<form id="form--task-detail">
+					<div class="form-field">
+						<label for="task-detail-title">Title</label>
+						<input id="task-detail-title" name="task_title" type="text" placeholder="Task title" required>
+					</div>
+					<div class="form-row">
+						<div class="form-field">
+							<label for="task-detail-status">Status</label>
+							<select id="task-detail-status" name="task_status"></select>
+						</div>
+						<div class="form-field">
+							<label for="task-detail-priority">Priority</label>
+							<select id="task-detail-priority" name="task_priority">
+								<option value="none">None</option>
+								<option value="low">Low</option>
+								<option value="medium">Medium</option>
+								<option value="high">High</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-field">
+						<label for="task-detail-description">Description</label>
+						<textarea id="task-detail-description" name="task_description" placeholder="Task description ..." rows="6"></textarea>
+					</div>
+					<button type="submit" class="btn">Save task</button>
 				</form>
 			</div>
 		</modal>

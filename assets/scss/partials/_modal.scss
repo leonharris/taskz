@@ -54,7 +54,8 @@
 	}
 }
 
-#close-modal {
+
+.modal--close {
 	position: absolute;
 	top: 20px;
 	right: 20px;
@@ -68,8 +69,6 @@
 	border: 1px solid transparent;
 	transition: all 0.2s ease;
 	padding: 0;
-	float: none;
-	right: 20px; /* Reset float behavior */
 
 	img {
 		width: 14px;
@@ -81,19 +80,54 @@
 	&:hover {
 		background-color: var(--surface-2);
 		border-color: var(--border-color);
-		opacity: 1;
 	}
 }
 
-/* Helper for JS toggling if needed, though we use .is-visible on .modal now */
-.show-modal {
-	.modal {
-		/* Kept for backward compatibility if JS checks this class on body, 
-		   but ideally standardizing on .is-visible on the modal element itself */
+/* Task detail modal */
+.task-detail .modal--wrap {
+	max-width: 600px;
+}
+
+.form-row {
+	display: flex;
+	gap: var(--space-s);
+
+	.form-field {
+		flex: 1;
+	}
+}
+
+.form-field label {
+	display: block;
+	font-size: var(--step--1);
+	color: var(--color-text-muted);
+	margin-bottom: 6px;
+	font-weight: 500;
+}
+
+.form-field select {
+	width: 100%;
+	padding: 14px 18px;
+	border: 1px solid var(--border-color);
+	background-color: var(--surface-2);
+	color: var(--color-headers);
+	border-radius: var(--border-radius-sm);
+	font-family: var(--font-sans);
+	font-size: var(--step-0);
+	transition: all 0.2s ease;
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 14px center;
+	cursor: pointer;
+
+	&:focus {
+		outline: none;
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 1px var(--color-primary);
 	}
 }
 
 .underlay {
-	/* Deprecated in favor of .modal backdrop */
-	display: none; 
+	display: none;
 }
