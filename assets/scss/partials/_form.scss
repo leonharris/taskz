@@ -1,20 +1,41 @@
-input {
-  background: var(--surface-2);
-  border: 1px solid var(--border-color);
-  font-size: 16px;
-  line-height: 24px;
-  padding: 14px 16px;
-  width: 100%;
-  border-radius: var(--border-radius-sm);
-  color: var(--color-headers);
-  transition: border-color 0.15s ease;
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+	width: 100%;
+	padding: 14px 18px;
+	border: 1px solid var(--border-color);
+	background-color: var(--surface-2);
+	color: var(--color-headers);
+	border-radius: var(--border-radius-sm);
+	font-family: var(--font-sans);
+	font-size: var(--step-0);
+	transition: all 0.2s ease;
 
-  &::placeholder {
-    color: var(--color-text-muted);
-  }
+	&::placeholder {
+		color: var(--color-text-muted);
+	}
 
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
+	&:focus {
+		outline: none;
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 1px var(--color-primary);
+	}
+}
+
+textarea {
+	width: 100%;
+	padding: 14px 18px;
+	border: 1px solid var(--border-color);
+	background-color: var(--surface-2);
+	color: var(--color-headers);
+	border-radius: var(--border-radius-sm);
+	font-family: var(--font-sans);
+	font-size: var(--step-0);
+	transition: all 0.2s ease;
+	resize: vertical;
+
+	&:focus {
+		outline: none;
+		border-color: var(--color-primary);
+	}
 }

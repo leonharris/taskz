@@ -6,10 +6,14 @@
 body {
 	padding: 0;
 	margin: 0;
-	font: var(--step-0) / 1.5 var(--font-sans);
-	font-weight: 500;
+	font-family: var(--font-sans);
+	font-size: var(--step-0);
+	line-height: 1.6;
+	font-weight: 300; /* Lighter weight for dark mode */
 	color: var(--color-text);
 	background-color: var(--pg-bg);
+    background-image: radial-gradient(circle at 50% 0%, var(--glow-color) 0%, transparent 60%);
+    background-attachment: fixed;
 	-webkit-text-size-adjust: 100%;
 	-webkit-font-smoothing: antialiased;
 }
@@ -19,8 +23,10 @@ h2,
 h3,
 h4 {
 	color: var(--color-headers);
-	font-weight: 700;
+	font-weight: 600;
+	letter-spacing: -0.02em;
 	margin-top: 0;
+    line-height: 1.2;
 }
 
 p {
@@ -40,39 +46,44 @@ button {
 
 // Scrollbar styling for dark theme
 ::-webkit-scrollbar {
-	width: 6px;
-	height: 6px;
+	width: 8px;
+	height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-	background: transparent;
+	background: var(--pg-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-	background: var(--border-color-light);
-	border-radius: 3px;
+	background: var(--surface-2);
+	border-radius: 4px;
 
 	&:hover {
-		background: var(--color-text-muted);
+		background: var(--surface-3);
 	}
 }
 
 /* Buttons
 ------------------------------------------------ */
 .btn {
-	padding: 10px 22px;
+	padding: 12px 28px;
 	border: 0;
 	background: var(--color-primary);
-	color: var(--pg-bg);
-	font-weight: 700;
-	border-radius: var(--border-radius-sm);
+	color: var(--color-primary-text);
+	font-weight: 600;
+	border-radius: var(--border-radius-pill);
 	font-size: var(--step--1);
-	transition: background-color 0.2s ease;
+	transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.8rem;
 }
 
 .btn:focus,
 .btn:hover {
-	background-color: var(--color-primary-dark);
+	background-color: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(204, 255, 0, 0.4);
 }
 
 .btn-action {
@@ -208,9 +219,13 @@ nav {
 
 /* Navbar
 ------------------------------------------------ */
+/* Navbar
+------------------------------------------------ */
 .app-navbar {
 	background-color: var(--navbar-bg);
-	padding: 12px var(--space-s);
+    backdrop-filter: blur(var(--navbar-blur));
+    -webkit-backdrop-filter: blur(var(--navbar-blur));
+	padding: 16px var(--space-m);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -219,8 +234,8 @@ nav {
 	left: 0;
 	width: 100%;
 	z-index: 100;
-	border-bottom: 1px solid var(--border-color);
-	gap: 12px;
+	border-bottom: 1px solid rgba(255,255,255,0.05);
+	gap: 16px;
 }
 
 /* Site Container
@@ -266,28 +281,35 @@ nav {
 }
 
 .status-column header {
-	background-color: var(--surface-1);
+	background-color: transparent;
 	color: var(--color-headers);
-	padding: 12px 16px;
+	padding: 12px 4px;
 	margin: 0 0 16px;
 	font-weight: 600;
 	display: flex;
 	align-items: center;
-	border-radius: var(--border-radius);
-	border-left: 4px solid var(--status-color);
-	font-size: var(--step--1);
+	border-radius: 0;
+	border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-left: 0;
+	font-size: var(--step-0);
+    box-shadow: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
 }
 
 .status-column header span.handle {
 	display: block;
 	height: 16px;
-	width: 8px;
-	margin-right: 10px;
+	width: 16px; /* slightly larger click area */
+	margin-right: 12px;
 	background-image: url("../images/grip-dots-vertical-solid.svg");
 	background-repeat: no-repeat;
 	background-size: contain;
+    filter: invert(1); /* Ensure icons are white */
 	cursor: grab;
-	opacity: 0.4;
+	opacity: 0.3;
 	transition: opacity 0.15s ease;
 
 	&:hover {
@@ -295,28 +317,27 @@ nav {
 	}
 }
 
-.status-column header span:not(.handle) {
-	display: block;
-	width: 100%;
-}
-
 .status-column--footer {
 	@media only screen and (max-width: 599px) {
 		display: flex;
 		justify-content: space-between;
 	}
-	margin-top: 12px;
+	margin-top: 16px;
 	> * {
 		margin: 8px 0;
 	}
 	button {
 		margin-bottom: 8px;
-		font-weight: 600;
+		font-weight: 500;
 		color: var(--color-text-muted);
 		font-size: var(--step--1);
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease;
 
 		&:hover {
 			color: var(--color-primary);
+            transform: translateX(2px);
 		}
 	}
 }
@@ -330,25 +351,73 @@ nav {
 /* Task Card
 --------------------------------------------------*/
 .task {
-	background-color: var(--surface-2);
-	margin-bottom: 10px;
-	padding: 14px 14px 10px;
-	border: 1px solid var(--border-color);
-	border-left: 4px solid var(--status-color);
+	background-color: var(--surface-1);
+	margin-bottom: 12px;
+	padding: 20px;
+	border: 1px solid transparent;
+    border-left: 0;
 	cursor: grab;
 	border-radius: var(--border-radius);
-	transition:
-		border-color 0.15s ease,
-		background-color 0.15s ease;
+	transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background-color: var(--status-color);
+        opacity: 0.8;
+    }
 
 	&:hover {
-		border-color: var(--border-color-light);
-		background-color: var(--surface-3);
+		border-color: rgba(79, 209, 197, 0.3);
+		background-color: var(--surface-raised);
+        transform: translateY(-3px);
+        box-shadow: 
+            0 10px 15px -3px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(79, 209, 197, 0.1); 
 
 		.btn-delete-task-wrap {
 			opacity: 1;
 		}
 	}
+}
+
+.task--tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.task--tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 99px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+}
+
+.task--tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.task--tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 99px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
 }
 
 .task--content,
@@ -380,38 +449,47 @@ nav {
 	min-height: 100vh;
 	padding: var(--space-m);
 	background-color: var(--pg-bg);
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(204, 255, 0, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.03), transparent 25%);
 }
 
 .auth-box {
-	background-color: var(--surface-1);
-	padding: var(--space-l);
+	background-color: rgba(26, 26, 26, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+	padding: 3rem;
 	border-radius: var(--border-radius);
 	border: 1px solid var(--border-color);
 	width: 100%;
-	max-width: 400px;
+	max-width: 440px;
 	text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 
 	.site-title {
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-m);
+        font-size: var(--step-2);
 	}
 
 	h2 {
-		margin-bottom: var(--space-m);
-		font-size: var(--step-1);
-		color: var(--color-headers);
+		margin-bottom: var(--space-l);
+		font-size: var(--step-0);
+		color: var(--color-text);
+        font-weight: 400;
 	}
 
 	.form-field {
-		margin-bottom: var(--space-s);
+		margin-bottom: var(--space-m);
 
 		input {
 			width: 100%;
-			padding: 12px 16px;
+			padding: 14px 20px;
 			border: 1px solid var(--border-color);
 			border-radius: var(--border-radius-sm);
-			font-size: var(--step-0);
+			font-size: var(--step--1);
 			background-color: var(--surface-2);
 			color: var(--color-headers);
+            transition: all 0.2s ease;
 
 			&::placeholder {
 				color: var(--color-text-muted);
@@ -420,13 +498,15 @@ nav {
 			&:focus {
 				outline: none;
 				border-color: var(--color-primary);
+                box-shadow: 0 0 0 1px var(--color-primary);
 			}
 		}
 	}
 
 	.btn {
 		width: 100%;
-		margin-top: var(--space-xs);
+		margin-top: var(--space-s);
+        padding: 16px;
 	}
 }
 
@@ -451,12 +531,14 @@ nav {
 }
 
 .btn-secondary {
-	background-color: var(--surface-2);
-	color: var(--color-text);
+	background-color: transparent;
+	color: var(--color-headers);
 	border: 1px solid var(--border-color);
+    font-weight: 500;
 
 	&:hover {
-		background-color: var(--surface-3);
+		background-color: var(--surface-2);
+        border-color: var(--color-headers);
 		color: var(--color-headers);
 	}
 }

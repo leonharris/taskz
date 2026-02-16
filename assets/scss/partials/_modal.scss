@@ -1,78 +1,99 @@
 /* Modals
 ---------------------------------------------*/
 .modal {
-  background-color: var(--surface-1);
-  min-width: 400px;
-  display: none;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  z-index: 200;
-}
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(5px);
+	-webkit-backdrop-filter: blur(5px);
+	z-index: 1000;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 
-.show-modal {
-  .modal {
-    display: block;
-  }
-  .notice,
-  .site-container,
-  .site-footer {
-    filter: blur(2px);
-  }
-}
-
-.underlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: 150;
-}
-
-.show-modal .underlay {
-  display: block;
+	&.is-visible {
+		opacity: 1;
+		visibility: visible;
+		
+		.modal--wrap {
+			transform: translateY(0);
+			opacity: 1;
+		}
+	}
 }
 
 .modal--wrap {
-  padding: 50px;
-}
-
-.modal--wrap * {
-  margin-top: 0;
-}
-
-#close-modal {
-  float: right;
-  top: 15px;
-  position: relative;
-  right: 15px;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  transition: opacity 0.15s ease;
-  img {
-    width: 20px;
-    height: 20px;
-    filter: invert(1);
-  }
-  &:hover {
-    opacity: 0.7;
-  }
+	background-color: var(--surface-1);
+	width: 100%;
+	max-width: 500px;
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
+	padding: var(--space-l);
+	position: relative;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+	transform: translateY(20px);
+	opacity: 0;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	margin-top: 0;
 }
 
 .modal--header {
-  margin-bottom: 20px;
+	margin-bottom: var(--space-m);
 
-  h2 {
-    color: var(--color-headers);
-  }
+	h2 {
+		margin: 0;
+		font-size: var(--step-1);
+		color: var(--color-headers);
+		font-weight: 600;
+	}
+}
+
+#close-modal {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	width: 32px;
+	height: 32px;
+	background: transparent;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid transparent;
+	transition: all 0.2s ease;
+	padding: 0;
+	float: none;
+	right: 20px; /* Reset float behavior */
+
+	img {
+		width: 14px;
+		height: 14px;
+		filter: invert(1);
+		display: block;
+	}
+
+	&:hover {
+		background-color: var(--surface-2);
+		border-color: var(--border-color);
+		opacity: 1;
+	}
+}
+
+/* Helper for JS toggling if needed, though we use .is-visible on .modal now */
+.show-modal {
+	.modal {
+		/* Kept for backward compatibility if JS checks this class on body, 
+		   but ideally standardizing on .is-visible on the modal element itself */
+	}
+}
+
+.underlay {
+	/* Deprecated in favor of .modal backdrop */
+	display: none; 
 }

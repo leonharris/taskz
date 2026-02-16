@@ -1,35 +1,47 @@
 // utopia https://utopia.fyi/type/calculator?c=420,16,1.2,1240,18,1.25,5,2,&s=0.75,1.5|2|3|4|6,s-l&g=s,l,xl,12
 
 :root {
-  // Dark theme palette
-  --color-primary: #4ecdc4;
-  --color-primary-dark: #3db8b0;
+  // Brand Colors (t0ggles.com inspired)
+  --color-primary: #ccff00; /* Neon Lime/Yellow */
+  --color-primary-hover: #b3e600;
+  --color-primary-text: #000000;
+
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-text: #9ca3b4;
-  --color-text-muted: #6b7280;
-  --color-headers: #e2e8f0;
-  --status-color: #4ecdc4;
+  --color-text: #e0e0e0;
+  --color-text-muted: #888888;
+  --color-headers: #ffffff;
+  
+  --status-color: #ccff00;
 
-  // Surfaces
-  --pg-bg: #111827;
-  --surface-1: #1e2536;
-  --surface-2: #252d3f;
-  --surface-3: #2a3349;
-  --surface-raised: #1a2234;
+  // Backgrounds & Surfaces
+  --pg-bg: #0c0c0c;       /* Deepest charcoal/black */
+  --surface-1: #1a1a1a;   /* Card background */
+  --surface-2: #262626;   /* Input/Secondary background */
+  --surface-3: #333333;   /* Hover state */
+  --surface-raised: #1f1f1f;
+  
+  // Effects
+  --glow-color: rgba(79, 209, 197, 0.15); /* Teal/Blue glow matches Smile Well */
+  --glow-spread: 120px;
 
   // Borders
-  --border-color: #2d3748;
-  --border-color-light: #374151;
+  --border-color: #333333;
+  --border-color-light: #444444;
 
   // Navbar
-  --navbar-bg: #0f1623;
+  --navbar-bg: rgba(12, 12, 12, 0.8); /* Glassmorphism base */
+  --navbar-blur: 10px;
 
-  --font-sans: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --border-radius: 10px;
-  --border-radius-sm: 6px;
+  // Typography
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  // Shapes
+  --border-radius: 16px;       /* Modern rounded cards */
+  --border-radius-sm: 8px;
+  --border-radius-pill: 9999px; /* For buttons */
 
+  // Typography Scale (Utopia)
   --step--2: clamp(0.69rem, calc(0.68rem + 0.05vw), 0.72rem);
   --step--1: clamp(0.83rem, calc(0.80rem + 0.13vw), 0.90rem);
   --step-0: clamp(1.00rem, calc(0.94rem + 0.24vw), 1.13rem);
@@ -39,6 +51,7 @@
   --step-4: clamp(2.07rem, calc(1.73rem + 1.31vw), 2.75rem);
   --step-5: clamp(2.49rem, calc(2.00rem + 1.84vw), 3.43rem);
 
+  // Spacing
   --space-xs: clamp(0.88rem, calc(0.85rem + 0.11vw), 0.94rem);
   --space-s: clamp(1.13rem, calc(1.08rem + 0.22vw), 1.25rem);
   --space-m: clamp(1.69rem, calc(1.62rem + 0.33vw), 1.88rem);

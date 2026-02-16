@@ -34,79 +34,79 @@ let boardLoaded = false;
 
 // Sign in with email/password
 async function signIn(email, password) {
-  console.log('Attempting sign in with:', email);
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error) {
-    console.error('Sign in error:', error);
-    alert('Error signing in: ' + error.message);
-    return null;
-  }
-  console.log('Sign in successful:', data);
-  return data;
+	console.log('Attempting sign in with:', email);
+	const { data, error } = await supabase.auth.signInWithPassword({
+		email,
+		password,
+	});
+	if (error) {
+		console.error('Sign in error:', error);
+		alert('Error signing in: ' + error.message);
+		return null;
+	}
+	console.log('Sign in successful:', data);
+	return data;
 }
 
 // Sign out
 async function signOut() {
-  // Clear UI immediately — don't wait for Supabase (signOut hangs sometimes)
-  currentUser = null;
-  updateAuthUI();
-  document.getElementById('board').innerHTML = '';
+	// Clear UI immediately — don't wait for Supabase (signOut hangs sometimes)
+	currentUser = null;
+	updateAuthUI();
+	document.getElementById('board').innerHTML = '';
 
-  // Remove Supabase session from localStorage so a refresh won't restore it
-  // (signOut() sometimes hangs and never actually clears the stored token)
-  for (const key of Object.keys(localStorage)) {
-    if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-      localStorage.removeItem(key);
-    }
-  }
+	// Remove Supabase session from localStorage so a refresh won't restore it
+	// (signOut() sometimes hangs and never actually clears the stored token)
+	for (const key of Object.keys(localStorage)) {
+		if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+			localStorage.removeItem(key);
+		}
+	}
 
-  supabase.auth.signOut().catch(function() {});
+	supabase.auth.signOut().catch(function () { });
 }
 
 // Update UI based on auth state
 function updateAuthUI() {
-  const authContainer = document.getElementById('auth-container');
-  const appContent = document.getElementById('app-content');
-  const userEmail = document.getElementById('user-email');
+	const authContainer = document.getElementById('auth-container');
+	const appContent = document.getElementById('app-content');
+	const userEmail = document.getElementById('user-email');
 
-  if (currentUser) {
-    authContainer.style.display = 'none';
-    appContent.style.display = 'block';
-    if (userEmail) userEmail.textContent = currentUser.email;
-  } else {
-    authContainer.style.display = 'flex';
-    appContent.style.display = 'none';
-  }
+	if (currentUser) {
+		authContainer.style.display = 'none';
+		appContent.style.display = 'block';
+		if (userEmail) userEmail.textContent = currentUser.email;
+	} else {
+		authContainer.style.display = 'flex';
+		appContent.style.display = 'none';
+	}
 }
 
 // Listen for auth state changes
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth state change:', event);
-  currentUser = session?.user || null;
-  updateAuthUI();
+	console.log('Auth state change:', event);
+	currentUser = session?.user || null;
+	updateAuthUI();
 
-  // Don't await DB calls here — it deadlocks the Supabase client.
-  if (currentUser && !boardLoaded) {
-    boardLoaded = true;
-    loadBoardFromSupabase(); // fire-and-forget (no await)
-  } else if (!currentUser) {
-    boardLoaded = false;
-  }
+	// Don't await DB calls here — it deadlocks the Supabase client.
+	if (currentUser && !boardLoaded) {
+		boardLoaded = true;
+		loadBoardFromSupabase(); // fire-and-forget (no await)
+	} else if (!currentUser) {
+		boardLoaded = false;
+	}
 });
 
 // Check initial auth state
 async function checkAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  currentUser = session?.user || null;
-  updateAuthUI();
+	const { data: { session } } = await supabase.auth.getSession();
+	currentUser = session?.user || null;
+	updateAuthUI();
 
-  if (currentUser && !boardLoaded) {
-    boardLoaded = true;
-    await loadBoardFromSupabase();
-  }
+	if (currentUser && !boardLoaded) {
+		boardLoaded = true;
+		await loadBoardFromSupabase();
+	}
 }
 
 /*
@@ -115,153 +115,153 @@ async function checkAuth() {
 
 // Save board to Supabase
 async function saveBoardToSupabase() {
-  if (!currentUser) return;
+	if (!currentUser) return;
 
-  const boardData = getBoardData();
-  if (!boardData.length) return;
+	const boardData = getBoardData();
+	if (!boardData.length) return;
 
-  console.log('Saving board data:', boardData);
+	console.log('Saving board data:', boardData);
 
-  try {
-    // Check if user already has a board
-    console.log('Fetching existing board for user:', currentUser.id);
-    const { data: existingBoard, error: fetchError } = await supabase
-      .from('boards')
-      .select('id')
-      .eq('user_id', currentUser.id)
-      .single();
+	try {
+		// Check if user already has a board
+		console.log('Fetching existing board for user:', currentUser.id);
+		const { data: existingBoard, error: fetchError } = await supabase
+			.from('boards')
+			.select('id')
+			.eq('user_id', currentUser.id)
+			.single();
 
-    console.log('Fetch result:', { existingBoard, fetchError });
+		console.log('Fetch result:', { existingBoard, fetchError });
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching board:', fetchError);
-      return;
-    }
+		if (fetchError && fetchError.code !== 'PGRST116') {
+			console.error('Error fetching board:', fetchError);
+			return;
+		}
 
-    if (existingBoard) {
-      // Update existing board
-      console.log('Updating board:', existingBoard.id);
-      const { error: updateError } = await supabase
-        .from('boards')
-        .update({ data: boardData, updated_at: new Date().toISOString() })
-        .eq('id', existingBoard.id);
+		if (existingBoard) {
+			// Update existing board
+			console.log('Updating board:', existingBoard.id);
+			const { error: updateError } = await supabase
+				.from('boards')
+				.update({ data: boardData, updated_at: new Date().toISOString() })
+				.eq('id', existingBoard.id);
 
-      if (updateError) {
-        console.error('Error updating board:', updateError);
-      } else {
-        console.log('Board updated successfully');
-      }
-    } else {
-      // Insert new board
-      console.log('Inserting new board');
-      const { error: insertError } = await supabase
-        .from('boards')
-        .insert({ user_id: currentUser.id, data: boardData });
+			if (updateError) {
+				console.error('Error updating board:', updateError);
+			} else {
+				console.log('Board updated successfully');
+			}
+		} else {
+			// Insert new board
+			console.log('Inserting new board');
+			const { error: insertError } = await supabase
+				.from('boards')
+				.insert({ user_id: currentUser.id, data: boardData });
 
-      if (insertError) {
-        console.error('Error inserting board:', insertError);
-      } else {
-        console.log('Board inserted successfully');
-      }
-    }
-  } catch (err) {
-    console.error('saveBoardToSupabase threw:', err);
-  }
+			if (insertError) {
+				console.error('Error inserting board:', insertError);
+			} else {
+				console.log('Board inserted successfully');
+			}
+		}
+	} catch (err) {
+		console.error('saveBoardToSupabase threw:', err);
+	}
 }
 
 // Load board from Supabase
 async function loadBoardFromSupabase() {
-  if (!currentUser) return;
+	if (!currentUser) return;
 
-  try {
-    console.log('Loading board for user:', currentUser.id);
-    const { data: board, error } = await supabase
-      .from('boards')
-      .select('data')
-      .eq('user_id', currentUser.id)
-      .single();
+	try {
+		console.log('Loading board for user:', currentUser.id);
+		const { data: board, error } = await supabase
+			.from('boards')
+			.select('data')
+			.eq('user_id', currentUser.id)
+			.single();
 
-    console.log('Load result:', { board, error });
+		console.log('Load result:', { board, error });
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error loading board:', error);
-      return;
-    }
+		if (error && error.code !== 'PGRST116') {
+			console.error('Error loading board:', error);
+			return;
+		}
 
-    if (board && board.data) {
-      console.log('Populating board with', board.data.length, 'columns');
-      // Clear existing board
-      document.getElementById('board').innerHTML = '';
-      // Populate from Supabase data
-      populateTasksFromData(board.data);
-    } else {
-      console.log('No board data found');
-    }
-  } catch (err) {
-    console.error('loadBoardFromSupabase threw:', err);
-  }
+		if (board && board.data) {
+			console.log('Populating board with', board.data.length, 'columns');
+			// Clear existing board
+			document.getElementById('board').innerHTML = '';
+			// Populate from Supabase data
+			populateTasksFromData(board.data);
+		} else {
+			console.log('No board data found');
+		}
+	} catch (err) {
+		console.error('loadBoardFromSupabase threw:', err);
+	}
 }
 
 // Get current board data as JSON
 function getBoardData() {
-  let boardData = [];
-  const col = document.querySelectorAll('.status-column');
+	let boardData = [];
+	const col = document.querySelectorAll('.status-column');
 
-  for (let list of col) {
-    let list_id = list.id;
-    let col_el = document.getElementById(list_id);
-    let col_header_text = col_el.getElementsByTagName('header')[0].innerText;
-    var col_color = getComputedStyle(col_el).getPropertyValue('--status-color');
+	for (let list of col) {
+		let list_id = list.id;
+		let col_el = document.getElementById(list_id);
+		let col_header_text = col_el.getElementsByTagName('header')[0].innerText;
+		var col_color = getComputedStyle(col_el).getPropertyValue('--status-color');
 
-    let tasks = list.querySelectorAll('.task');
-    const task_data = [];
-    let ii = 1;
+		let tasks = list.querySelectorAll('.task');
+		const task_data = [];
+		let ii = 1;
 
-    for (let task of tasks) {
-      let task_title_el = task.getElementsByClassName('task--title');
-      let task__title = task_title_el[0].innerHTML;
-      let task_content_el = task.getElementsByClassName('task--content');
-      let task__content = task_content_el[0].innerHTML;
-      task_data.push({
-        id: ii,
-        task_title: task__title,
-        task_content: task__content
-      });
-      ii++;
-    }
+		for (let task of tasks) {
+			let task_title_el = task.getElementsByClassName('task--title');
+			let task__title = task_title_el[0].innerHTML;
+			let task_content_el = task.getElementsByClassName('task--content');
+			let task__content = task_content_el[0].innerHTML;
+			task_data.push({
+				id: ii,
+				task_title: task__title,
+				task_content: task__content
+			});
+			ii++;
+		}
 
-    boardData.push({
-      name: col_header_text,
-      color: col_color,
-      tasks: task_data
-    });
-  }
+		boardData.push({
+			name: col_header_text,
+			color: col_color,
+			tasks: task_data
+		});
+	}
 
-  return boardData;
+	return boardData;
 }
 
 // Populate tasks from data (used by both localStorage and Supabase)
 function populateTasksFromData(tasks) {
-  let i = 0;
-  for (let col of tasks) {
-    let col_name = col.name;
-    let col_color = col.color;
-    let task_items = col.tasks;
+	let i = 0;
+	for (let col of tasks) {
+		let col_name = col.name;
+		let col_color = col.color;
+		let task_items = col.tasks;
 
-    let blank_col = false;
-    createList(blank_col, col_name, col_color);
+		let blank_col = false;
+		createList(blank_col, col_name, col_color);
 
-    var listCol = document.getElementsByClassName('tasks-list');
+		var listCol = document.getElementsByClassName('tasks-list');
 
-    for (let task of task_items) {
-      let task_li = createTask(task.task_title, task.task_content);
-      listCol[i].appendChild(task_li);
-    }
-    i++;
-  }
+		for (let task of task_items) {
+			let task_li = createTask(task.task_title, task.task_content);
+			listCol[i].appendChild(task_li);
+		}
+		i++;
+	}
 
-  deleteList();
-  activateSortable();
+	deleteList();
+	activateSortable();
 }
 
 /*
@@ -269,10 +269,10 @@ function populateTasksFromData(tasks) {
 * Used to set list colour
 */
 var colorPicker = new iro.ColorPicker("#color-picker", {
-  // Set the size of the color color-picker
-  width: 300,
-  // Set the initial color to pure red
-  color: "#f00"
+	// Set the size of the color color-picker
+	width: 300,
+	// Set the initial color to pure red
+	color: "#f00"
 });
 
 /*
@@ -280,48 +280,48 @@ var colorPicker = new iro.ColorPicker("#color-picker", {
 // Set initial sorting for Task lists on screen
 */
 function activateSortable() {
-  const taskListUL = document.querySelectorAll('.tasks-list');
-  taskListUL.forEach((ul) => {
-    new Sortable(ul, {
-      animation: 300,
-      group: 'task-list',
-      store: {
-        get: (sortable) => {
-          const order = localStorage.getItem(sortable.options.group.name);
-          return order ? order.split('|') : [];
-        },
-        set: (sortable) => {
-          const order = sortable.toArray();
-          localStorage.setItem(sortable.options.group.name, order.join('|'));
-        }
-      }
-    });
-  });
+	const taskListUL = document.querySelectorAll('.tasks-list');
+	taskListUL.forEach((ul) => {
+		new Sortable(ul, {
+			animation: 300,
+			group: 'task-list',
+			store: {
+				get: (sortable) => {
+					const order = localStorage.getItem(sortable.options.group.name);
+					return order ? order.split('|') : [];
+				},
+				set: (sortable) => {
+					const order = sortable.toArray();
+					localStorage.setItem(sortable.options.group.name, order.join('|'));
+				}
+			}
+		});
+	});
 }
 
 // Add new List Column on form submit
 
 function getStatusFormData(form) {
-  const formData = new FormData(form);
-  const columnTitle = formData.get('column_title');
-  const hex = colorPicker.color.hexString || '#222';
-  createList(true, columnTitle, hex);
+	const formData = new FormData(form);
+	const columnTitle = formData.get('column_title');
+	const hex = colorPicker.color.hexString || '#222';
+	createList(true, columnTitle, hex);
 }
 
 document.getElementById("form--add-list").addEventListener("submit", (event) => {
-  event.preventDefault();
-  getStatusFormData(event.target);
-  document.body.classList.remove('show-modal');
+	event.preventDefault();
+	getStatusFormData(event.target);
+	document.body.classList.remove('show-modal');
 });
 
 
 // Add task on "add task" button click
 document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('btn-add-task')) {
-    const taskListUL = e.target.parentNode.parentNode.previousSibling;
-    const emptyTask = createTask("", "");
-    taskListUL.appendChild(emptyTask);
-  }
+	if (e.target.classList.contains('btn-add-task')) {
+		const taskListUL = e.target.parentNode.parentNode.previousSibling;
+		const emptyTask = createTask("", "");
+		taskListUL.appendChild(emptyTask);
+	}
 });
 
 
@@ -340,6 +340,15 @@ function createTask(task_title, task_content) {
 	let task_li = document.createElement("li");
 	task_li.classList.add('task');
 
+	// Create Tags (Mock based on demo)
+	let tags_div = document.createElement("div");
+	tags_div.classList.add('task--tags');
+	// Random mock tag for visual demo compliance
+	const mockTags = ['Design', 'Dev', 'Urgent', 'Marketing'];
+	const randomTag = mockTags[Math.floor(Math.random() * mockTags.length)];
+	tags_div.innerHTML = `<span class="task--tag">${randomTag}</span>`;
+	task_li.appendChild(tags_div);
+
 	// create task title
 	let task_header = document.createElement("h3");
 	task_header.classList.add('task--title');
@@ -355,6 +364,20 @@ function createTask(task_title, task_content) {
 	let task_content_text = document.createTextNode(content_content);
 	task_content_div.appendChild(task_content_text);
 	task_li.appendChild(task_content_div);
+
+	// Footer with avatar (Mock)
+	let task_footer = document.createElement("div");
+	task_footer.style.display = "flex";
+	task_footer.style.justifyContent = "space-between";
+	task_footer.style.marginTop = "12px";
+	task_footer.style.alignItems = "center";
+	task_footer.innerHTML = `
+        <div style="display:flex; gap: -4px;">
+            <div style="width:24px; height:24px; border-radius:50%; background:#4fd1c5; border:2px solid #1a1a1a;"></div>
+        </div>
+        <div style="font-size:10px; color:var(--color-text-muted);">Feb 24</div>
+    `;
+	task_li.appendChild(task_footer);
 
 	// Delete task button
 	let btn_delete_task = document.createElement("div");
@@ -396,17 +419,25 @@ function createList(blank_col, column_title, column_color) {
 	header_handle.classList.add('handle');
 	column_header.appendChild(header_handle);
 
+	// Mock Icon (Smile Well style)
+	let header_icon = document.createElement("span");
+	header_icon.style.marginRight = "8px";
+	header_icon.style.display = "flex";
+	header_icon.style.opacity = "0.7";
+	header_icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>';
+	column_header.appendChild(header_icon);
+
 	let header_text = document.createElement("span");
 	const title_text = document.createTextNode(column_title);
 	header_text.appendChild(title_text);
 	header_text.contentEditable = "true";
 	column_header.appendChild(header_text);
 
-    // Edit list button
-    let btn_edit_list = document.createElement("button");
-    btn_edit_list.classList.add('btn-action', 'btn-edit-list');
-    btn_edit_list.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M441 58.9L453.1 71c9.4 9.4 9.4 24.6 0 33.9L424 134.1 377.9 88 407 58.9c9.4-9.4 24.6-9.4 33.9 0zM209.8 256.2L344 121.9 390.1 168 255.8 302.2c-2.9 2.9-6.5 5-10.4 6.1l-58.5 16.7 16.7-58.5c1.1-3.9 3.2-7.5 6.1-10.4zM373.1 25L175.8 222.2c-8.7 8.7-15 19.4-18.3 31.1l-28.6 100c-2.4 8.4-.1 17.4 6.1 23.6s15.2 8.5 23.6 6.1l100-28.6c11.8-3.4 22.5-9.7 31.1-18.3L487 138.9c28.1-28.1 28.1-73.7 0-101.8L474.9 25C446.8-3.1 401.2-3.1 373.1 25zM88 64C39.4 64 0 103.4 0 152V424c0 48.6 39.4 88 88 88H360c48.6 0 88-39.4 88-88V312c0-13.3-10.7-24-24-24s-24 10.7-24 24V424c0 22.1-17.9 40-40 40H88c-22.1 0-40-17.9-40-40V152c0-22.1 17.9-40 40-40H200c13.3 0 24-10.7 24-24s-10.7-24-24-24H88z"/></svg>';
-    column_header.appendChild(btn_edit_list);
+	// Edit list button
+	let btn_edit_list = document.createElement("button");
+	btn_edit_list.classList.add('btn-action', 'btn-edit-list');
+	btn_edit_list.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M441 58.9L453.1 71c9.4 9.4 9.4 24.6 0 33.9L424 134.1 377.9 88 407 58.9c9.4-9.4 24.6-9.4 33.9 0zM209.8 256.2L344 121.9 390.1 168 255.8 302.2c-2.9 2.9-6.5 5-10.4 6.1l-58.5 16.7 16.7-58.5c1.1-3.9 3.2-7.5 6.1-10.4zM373.1 25L175.8 222.2c-8.7 8.7-15 19.4-18.3 31.1l-28.6 100c-2.4 8.4-.1 17.4 6.1 23.6s15.2 8.5 23.6 6.1l100-28.6c11.8-3.4 22.5-9.7 31.1-18.3L487 138.9c28.1-28.1 28.1-73.7 0-101.8L474.9 25C446.8-3.1 401.2-3.1 373.1 25zM88 64C39.4 64 0 103.4 0 152V424c0 48.6 39.4 88 88 88H360c48.6 0 88-39.4 88-88V312c0-13.3-10.7-24-24-24s-24 10.7-24 24V424c0 22.1-17.9 40-40 40H88c-22.1 0-40-17.9-40-40V152c0-22.1 17.9-40 40-40H200c13.3 0 24-10.7 24-24s-10.7-24-24-24H88z"/></svg>';
+	column_header.appendChild(btn_edit_list);
 
 	// add the html into the list <header>
 	column_inner.appendChild(column_header);
@@ -424,7 +455,7 @@ function createList(blank_col, column_title, column_color) {
 
 	// Add status column footer
 	let column_footer = document.createElement("footer");
-    column_footer.classList.add('status-column--footer');
+	column_footer.classList.add('status-column--footer');
 	column_inner.appendChild(column_footer);
 
 
@@ -440,7 +471,7 @@ function createList(blank_col, column_title, column_color) {
 	btn_delete_list.innerHTML = '<button class="btn-action btn-delete-list"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M432 64C440.8 64 448 71.16 448 80C448 88.84 440.8 96 432 96H413.7L388.2 452.6C385.9 486.1 357.1 512 324.4 512H123.6C90.01 512 62.15 486.1 59.75 452.6L34.29 96H16C7.164 96 0 88.84 0 80C0 71.16 7.164 64 16 64H111.1L137 22.56C145.8 8.526 161.2 0 177.7 0H270.3C286.8 0 302.2 8.526 310.1 22.56L336.9 64H432zM177.7 32C172.2 32 167.1 34.84 164.2 39.52L148.9 64H299.1L283.8 39.52C280.9 34.84 275.8 32 270.3 32H177.7zM381.6 96H66.37L91.67 450.3C92.87 467 106.8 480 123.6 480H324.4C341.2 480 355.1 467 356.3 450.3L381.6 96z"/></svg> Delete category</button>';
 	column_footer.appendChild(btn_delete_list);
 
-   	board.appendChild(column);
+	board.appendChild(column);
 
 	// SortableJS
 	new Sortable(board, {
@@ -465,13 +496,13 @@ function createList(blank_col, column_title, column_color) {
 // Delete list
 function deleteList() {
 	let delete_list_btn = document.querySelectorAll('.btn-delete-list');
-	delete_list_btn.forEach(function(el) {
-		el.addEventListener('click', function(e) {
+	delete_list_btn.forEach(function (el) {
+		el.addEventListener('click', function (e) {
 			let parentList = el.closest('.status-column');
 			let confirmation = confirm("Are you sure you want to delete this category?");
-		    if(confirmation == true){
+			if (confirmation == true) {
 				parentList.remove();
-		    }
+			}
 		})
 	});
 }
@@ -479,18 +510,18 @@ function deleteList() {
 
 // Delete task
 function deleteTask() {
-  let deleteButtons = document.querySelectorAll('.btn-delete-task');
-  deleteButtons.forEach(function(button) {
-    button.addEventListener('click', function() {
-      let parentTask = button.closest('.task');
-      if (parentTask) {
-        let confirmation = confirm("Are you sure you want to delete this task?");
-        if (confirmation) {
-          parentTask.remove();
-        }
-      }
-    });
-  });
+	let deleteButtons = document.querySelectorAll('.btn-delete-task');
+	deleteButtons.forEach(function (button) {
+		button.addEventListener('click', function () {
+			let parentTask = button.closest('.task');
+			if (parentTask) {
+				let confirmation = confirm("Are you sure you want to delete this task?");
+				if (confirmation) {
+					parentTask.remove();
+				}
+			}
+		});
+	});
 }
 
 
@@ -513,7 +544,7 @@ function closeModal() {
 }
 // Close modal - underlay click
 document.querySelector('.underlay').addEventListener('click', e => {
-  document.body.classList.remove('show-modal')
+	document.body.classList.remove('show-modal')
 })
 
 
@@ -523,11 +554,11 @@ document.querySelector('.underlay').addEventListener('click', e => {
 ---------------------------------------------------- */
 
 // Auto-save to Supabase every 5 seconds (if logged in)
-const saveInterval = setInterval(function() {
-  console.log('Auto-save check - User:', currentUser ? currentUser.email : 'not logged in');
-  if (currentUser) {
-    saveBoardToSupabase();
-  }
+const saveInterval = setInterval(function () {
+	console.log('Auto-save check - User:', currentUser ? currentUser.email : 'not logged in');
+	if (currentUser) {
+		saveBoardToSupabase();
+	}
 }, 5000);
 
 // Initialize app - check auth state
@@ -535,11 +566,11 @@ checkAuth();
 
 // Expose debugging functions globally
 window.taskzDebug = {
-  saveBoardToSupabase,
-  loadBoardFromSupabase,
-  getBoardData,
-  getCurrentUser: () => currentUser,
-  supabase
+	saveBoardToSupabase,
+	loadBoardFromSupabase,
+	getBoardData,
+	getCurrentUser: () => currentUser,
+	supabase
 };
 console.log('Taskz loaded. Debug with window.taskzDebug');
 
@@ -550,30 +581,30 @@ console.log('Taskz loaded. Debug with window.taskzDebug');
 const authForm = document.getElementById('auth-form');
 
 // Password visibility toggle
-document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    const input = btn.previousElementSibling;
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
-    btn.textContent = isPassword ? 'Hide' : 'Show';
-  });
+document.querySelectorAll('.btn-toggle-password').forEach(function (btn) {
+	btn.addEventListener('click', function () {
+		const input = btn.previousElementSibling;
+		const isPassword = input.type === 'password';
+		input.type = isPassword ? 'text' : 'password';
+		btn.textContent = isPassword ? 'Hide' : 'Show';
+	});
 });
 
 // Sign In form submit
 if (authForm) {
-  authForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    await signIn(email, password);
-  });
+	authForm.addEventListener('submit', async function (e) {
+		e.preventDefault();
+		const email = document.getElementById('auth-email').value;
+		const password = document.getElementById('auth-password').value;
+		await signIn(email, password);
+	});
 }
 
 // Use event delegation for sign-out so it works regardless of load timing
-document.addEventListener('click', function(e) {
-  if (e.target.id === 'sign-out-btn' || e.target.closest('#sign-out-btn')) {
-    signOut();
-  }
+document.addEventListener('click', function (e) {
+	if (e.target.id === 'sign-out-btn' || e.target.closest('#sign-out-btn')) {
+		signOut();
+	}
 });
 
 // Sign-up & password reset handlers (disabled — UI removed, kept for future use)
