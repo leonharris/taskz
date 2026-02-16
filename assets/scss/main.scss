@@ -72,11 +72,10 @@ button {
 	color: var(--color-primary-text);
 	font-weight: 600;
 	border-radius: var(--border-radius-pill);
-	font-size: var(--step--1);
+	font-size: var(--step--2);
 	transition: all 0.2s ease;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	font-size: 0.8rem;
 }
 
 .btn:focus,
@@ -173,7 +172,7 @@ button {
 
 .app-navbar .btn:not(.btn-secondary) {
 	padding: 8px 18px;
-	font-size: 0.72rem;
+	font-size: var(--step--2);
 }
 
 nav {
@@ -200,7 +199,7 @@ nav {
 		background: none;
 		border: none;
 		cursor: pointer;
-		font-size: 13px;
+		font-size: var(--step--2);
 		color: var(--color-text-muted);
 		padding: 4px 8px;
 
@@ -244,7 +243,7 @@ nav {
 
 	.site-title {
 		margin: 0;
-		font-size: 1.1rem;
+		font-size: var(--step-0);
 	}
 }
 
@@ -314,7 +313,7 @@ nav {
 	border-radius: 0;
 	border: none;
 	border-bottom: 2px solid var(--status-color);
-	font-size: 0.8rem;
+	font-size: var(--step--2);
 	box-shadow: none;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -360,7 +359,7 @@ nav {
 		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: var(--border-radius-pill);
 		color: var(--color-text-muted);
-		font-size: 0.8rem;
+		font-size: var(--step--2);
 		font-weight: 500;
 		transition: all 0.2s ease;
 		cursor: pointer;
@@ -435,7 +434,7 @@ nav {
 }
 
 .task--tag {
-	font-size: 10px;
+	font-size: var(--step--2);
 	font-weight: 700;
 	text-transform: uppercase;
 	padding: 3px 10px;
@@ -466,7 +465,7 @@ nav {
 }
 
 .task--title {
-	font-size: 0.9rem;
+	font-size: var(--step--1);
 	margin-bottom: 6px;
 	line-height: 1.4;
 	color: var(--color-headers);
@@ -565,12 +564,59 @@ nav {
 }
 
 .user-email {
-	font-size: 0.75rem;
+	font-size: var(--step--2);
 	color: var(--color-text-muted);
 	padding: 4px 12px;
 	background-color: rgba(255, 255, 255, 0.04);
 	border-radius: var(--border-radius-pill);
 	border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Sync Toast
+------------------------------------------------*/
+.sync-toast {
+	position: fixed;
+	top: 60px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 200;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 16px;
+	background-color: var(--surface-2);
+	border: 1px solid var(--border-color-light);
+	border-radius: var(--border-radius);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	font-size: var(--step--2);
+	color: var(--color-text);
+	animation: sync-toast-in 0.3s ease;
+
+	.btn-small {
+		padding: 6px 14px;
+		font-size: var(--step--2);
+	}
+}
+
+.sync-toast--dismiss {
+	color: var(--color-text-muted);
+	font-size: var(--step-0);
+	line-height: 1;
+
+	&:hover {
+		color: var(--color-headers);
+	}
+}
+
+@keyframes sync-toast-in {
+	from {
+		opacity: 0;
+		transform: translateX(-50%) translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0);
+	}
 }
 
 .btn-secondary {
@@ -579,7 +625,7 @@ nav {
 	border: 1px solid var(--border-color);
 	font-weight: 500;
 	padding: 8px 16px;
-	font-size: 0.75rem;
+	font-size: var(--step--2);
 
 	&:hover {
 		background-color: var(--surface-2);

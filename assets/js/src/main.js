@@ -14,6 +14,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let boardLoaded = false;
 let boardDirty = false;
+let lastSavedAt = null;
+let boardChannel = null;
 
 function markDirty() {
   boardDirty = true;
@@ -56,6 +58,7 @@ async function signIn(email, password) {
 // Sign out
 async function signOut() {
 	// Clear UI immediately — don't wait for Supabase (signOut hangs sometimes)
+	unsubscribeFromBoard();
 	currentUser = null;
 	updateAuthUI();
 	document.getElementById('board').innerHTML = '';
@@ -143,18 +146,21 @@ async function saveBoardToSupabase() {
 			return;
 		}
 
+		const now = new Date().toISOString();
+
 		if (existingBoard) {
 			// Update existing board
 			console.log('Updating board:', existingBoard.id);
 			const { error: updateError } = await supabase
 				.from('boards')
-				.update({ data: boardData, updated_at: new Date().toISOString() })
+				.update({ data: boardData, updated_at: now })
 				.eq('id', existingBoard.id);
 
 			if (updateError) {
 				console.error('Error updating board:', updateError);
 			} else {
 				console.log('Board updated successfully');
+				lastSavedAt = now;
 			}
 		} else {
 			// Insert new board
@@ -167,6 +173,7 @@ async function saveBoardToSupabase() {
 				console.error('Error inserting board:', insertError);
 			} else {
 				console.log('Board inserted successfully');
+				lastSavedAt = now;
 			}
 		}
 	} catch (err) {
@@ -199,8 +206,10 @@ async function loadBoardFromSupabase() {
 			document.getElementById('board').innerHTML = '';
 			// Populate from Supabase data
 			populateTasksFromData(board.data);
+			subscribeToBoardChanges();
 		} else {
 			console.log('No board data found');
+			subscribeToBoardChanges();
 		}
 	} catch (err) {
 		console.error('loadBoardFromSupabase threw:', err);
@@ -270,6 +279,66 @@ function populateTasksFromData(tasks) {
 }
 
 /*
+* Realtime Sync
+* Subscribe to board changes from other devices/windows
+*/
+
+function subscribeToBoardChanges() {
+  if (boardChannel || !currentUser) return;
+
+  boardChannel = supabase
+    .channel('board-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'boards',
+        filter: `user_id=eq.${currentUser.id}`,
+      },
+      (payload) => {
+        const remoteUpdatedAt = payload.new.updated_at;
+        // Ignore our own saves
+        if (lastSavedAt && remoteUpdatedAt === lastSavedAt) return;
+
+        if (boardDirty) {
+          showSyncToast();
+        } else {
+          loadBoardFromSupabase();
+        }
+      }
+    )
+    .subscribe();
+}
+
+function unsubscribeFromBoard() {
+  if (boardChannel) {
+    supabase.removeChannel(boardChannel);
+    boardChannel = null;
+  }
+}
+
+function showSyncToast() {
+  document.getElementById('sync-toast').style.display = 'flex';
+}
+
+function hideSyncToast() {
+  document.getElementById('sync-toast').style.display = 'none';
+}
+
+// Sync toast button handlers
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'sync-reload' || e.target.closest('#sync-reload')) {
+    boardDirty = false;
+    hideSyncToast();
+    loadBoardFromSupabase();
+  }
+  if (e.target.id === 'sync-dismiss' || e.target.closest('#sync-dismiss')) {
+    hideSyncToast();
+  }
+});
+
+/*
 * Iro Colour Picker
 * Used to set list colour
 */
@@ -289,6 +358,9 @@ function activateSortable() {
 	taskListUL.forEach((ul) => {
 		new Sortable(ul, {
 			animation: 300,
+			delay: 200,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
 			group: 'task-list',
 			onSort: markDirty,
 			store: {
@@ -458,6 +530,9 @@ function createList(blank_col, column_title, column_color) {
 	// SortableJS — column reordering (separate group from task lists)
 	new Sortable(board, {
 		animation: 300,
+		delay: 200,
+		delayOnTouchOnly: true,
+		touchStartThreshold: 5,
 		handle: '.handle',
 		draggable: '.status-column',
 		onSort: markDirty,
