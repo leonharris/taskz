@@ -1,28 +1,26 @@
-// utopia https://utopia.fyi/type/calculator?c=420,16,1.2,1240,18,1.25,5,2,&s=0.75,1.5|2|3|4|6,s-l&g=s,l,xl,12
-
 :root {
-	// Brand Colors (t0ggles.com inspired)
-	--color-primary: #fff; /* Neon Lime/Yellow */
+	// Brand Colors
+	--color-primary: #000;
 	--color-primary-hover: #b3e600;
 	--color-primary-text: #000000;
 
 	--color-white: #ffffff;
 	--color-black: #000000;
-	--color-text: #e0e0e0;
+	--color-text: #000;
 	--color-text-muted: #888888;
-	--color-headers: #ffffff;
+	--color-headers: #000;
 
 	--status-color: #ccff00;
 
 	// Backgrounds & Surfaces
-	--pg-bg: #0c0c0c; /* Deepest charcoal/black */
-	--surface-1: #1a1a1a; /* Card background */
-	--surface-2: #262626; /* Input/Secondary background */
-	--surface-3: #333333; /* Hover state */
-	--surface-raised: #1f1f1f;
+	--pg-bg: #f2f1ef;
+	--surface-1: #fff; /* Card background */
+	--surface-2: #eee; /* Input/Secondary background */
+	--surface-3: #999; /* Hover state */
+	--surface-raised: #ccc;
 
 	// Effects
-	--glow-color: rgba(79, 209, 197, 0.15); /* Teal/Blue glow matches Smile Well */
+	--glow-color: rgba(79, 209, 197, 0.15);
 	--glow-spread: 120px;
 
 	// Borders

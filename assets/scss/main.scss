@@ -3,6 +3,20 @@
 @import "partials/modal";
 @import "partials/form";
 
+body,
+html {
+	scroll-behavior: smooth;
+}
+:host,
+html {
+	-webkit-text-size-adjust: 100%;
+	tab-size: 4;
+	line-height: 1.5;
+	font-feature-settings: normal;
+	font-variation-settings: normal;
+	-webkit-tap-highlight-color: transparent;
+}
+
 body {
 	padding: 0;
 	margin: 0;
@@ -12,8 +26,8 @@ body {
 	font-weight: 300; /* Lighter weight for dark mode */
 	color: var(--color-text);
 	background-color: var(--pg-bg);
-	background-image: radial-gradient(circle at 50% 0%, var(--glow-color) 0%, transparent 60%);
-	background-attachment: fixed;
+	// background-image: radial-gradient(circle at 50% 0%, var(--glow-color) 0%, transparent 60%);
+	// background-attachment: fixed;
 	-webkit-text-size-adjust: 100%;
 	-webkit-font-smoothing: antialiased;
 }
@@ -68,10 +82,10 @@ button {
 .btn {
 	padding: 12px 28px;
 	border: 0;
-	background: var(--color-primary);
+	background: var(--color-white);
 	color: var(--color-primary-text);
 	font-weight: 600;
-	border-radius: var(--border-radius-pill);
+	// border-radius: var(--border-radius-pill);
 	font-size: var(--step--2);
 	transition: all 0.2s ease;
 	text-transform: uppercase;
@@ -155,7 +169,6 @@ button {
 	text-align: right;
 	opacity: 0;
 	transition: opacity 0.2s ease;
-	margin-top: 8px;
 	padding-top: 8px;
 }
 
@@ -274,7 +287,9 @@ nav {
 		opacity: 0;
 		transform: translateY(-12px);
 		pointer-events: none;
-		transition: opacity 0.25s ease, transform 0.25s ease;
+		transition:
+			opacity 0.25s ease,
+			transform 0.25s ease;
 
 		.btn,
 		.btn-secondary {
@@ -341,7 +356,9 @@ nav {
 		width: 100%;
 		background: var(--color-text);
 		border-radius: 2px;
-		transition: transform 0.25s ease, opacity 0.2s ease;
+		transition:
+			transform 0.25s ease,
+			opacity 0.2s ease;
 		transform-origin: center;
 	}
 }
@@ -413,7 +430,6 @@ nav {
 	border: none;
 	border-bottom: 2px solid var(--status-color);
 	font-size: var(--step--2);
-	box-shadow: none;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	gap: 2px;
@@ -494,7 +510,7 @@ nav {
 /* Task Card
 --------------------------------------------------*/
 .task {
-	background: rgba(255, 255, 255, 0.04);
+	background: white;
 	backdrop-filter: blur(16px);
 	-webkit-backdrop-filter: blur(16px);
 	margin-bottom: 10px;
@@ -503,12 +519,9 @@ nav {
 	border-left: 3px solid var(--status-color);
 	border-top: 1px solid rgba(255, 255, 255, 0.12);
 	cursor: grab;
-	border-radius: var(--border-radius);
+	// border-radius: var(--border-radius);
 	transition: all 0.25s ease;
 	position: relative;
-	box-shadow:
-		0 2px 8px rgba(0, 0, 0, 0.2),
-		inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
 	&:hover {
 		background: rgba(255, 255, 255, 0.07);
@@ -516,9 +529,6 @@ nav {
 		border-left-color: var(--status-color);
 		border-top-color: rgba(255, 255, 255, 0.18);
 		transform: translateY(-1px);
-		box-shadow:
-			0 8px 24px rgba(0, 0, 0, 0.3),
-			inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
 		.btn-delete-task-wrap {
 			opacity: 1;
@@ -564,7 +574,7 @@ nav {
 }
 
 .task--title {
-	font-size: var(--step--1);
+	font-size: var(--step-0);
 	margin-bottom: 6px;
 	line-height: 1.4;
 	color: var(--color-headers);
@@ -572,7 +582,7 @@ nav {
 }
 
 .task--content {
-	font-size: var(--step--2);
+	font-size: var(--step--1);
 	margin-bottom: 4px;
 	color: var(--color-text-muted);
 	line-height: 1.55;
@@ -602,7 +612,6 @@ nav {
 	width: 100%;
 	max-width: 440px;
 	text-align: center;
-	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 
 	.site-title {
 		margin-bottom: var(--space-m);
