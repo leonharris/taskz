@@ -235,6 +235,10 @@ nav {
 	z-index: 100;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 	height: 52px;
+
+	@media only screen and (max-width: 599px) {
+		height: 64px;
+	}
 }
 
 .app-navbar--left {
@@ -251,6 +255,50 @@ nav {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+
+	@media only screen and (max-width: 599px) {
+		position: fixed;
+		top: 64px;
+		left: 0;
+		right: 0;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+		background-color: var(--navbar-bg);
+		backdrop-filter: blur(var(--navbar-blur));
+		-webkit-backdrop-filter: blur(var(--navbar-blur));
+		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		padding: 16px var(--space-m) 20px;
+		z-index: 99;
+		// Hidden state
+		opacity: 0;
+		transform: translateY(-12px);
+		pointer-events: none;
+		transition: opacity 0.25s ease, transform 0.25s ease;
+
+		.btn,
+		.btn-secondary {
+			width: 100%;
+			text-align: center;
+			justify-content: center;
+			box-sizing: border-box;
+			padding: 12px 18px;
+		}
+
+		.user-email {
+			text-align: center;
+			width: 100%;
+			box-sizing: border-box;
+		}
+	}
+}
+
+.app-navbar.is-open .app-navbar--right {
+	@media only screen and (max-width: 599px) {
+		opacity: 1;
+		transform: translateY(0);
+		pointer-events: all;
+	}
 }
 
 .app-navbar--actions {
@@ -258,12 +306,63 @@ nav {
 	align-items: center;
 	gap: 2px;
 	margin: 0 4px;
+
+	@media only screen and (max-width: 599px) {
+		justify-content: center;
+		margin: 0;
+	}
+}
+
+/* Burger menu button
+------------------------------------------------ */
+.burger-btn {
+	display: none;
+	flex-direction: column;
+	justify-content: center;
+	gap: 5px;
+	width: 36px;
+	height: 36px;
+	padding: 6px;
+	margin-left: auto;
+	border-radius: 6px;
+	transition: background-color 0.15s ease;
+
+	&:hover {
+		background-color: rgba(255, 255, 255, 0.06);
+	}
+
+	@media only screen and (max-width: 599px) {
+		display: flex;
+	}
+
+	.burger-btn--bar {
+		display: block;
+		height: 2px;
+		width: 100%;
+		background: var(--color-text);
+		border-radius: 2px;
+		transition: transform 0.25s ease, opacity 0.2s ease;
+		transform-origin: center;
+	}
+}
+
+.app-navbar.is-open .burger-btn {
+	.burger-btn--bar:nth-child(1) {
+		transform: translateY(7px) rotate(45deg);
+	}
+	.burger-btn--bar:nth-child(2) {
+		opacity: 0;
+		transform: scaleX(0);
+	}
+	.burger-btn--bar:nth-child(3) {
+		transform: translateY(-7px) rotate(-45deg);
+	}
 }
 
 /* Site Container
 ------------------------------------------------*/
 .site-container {
-	padding: 80px 1rem 1rem;
+	padding: 88px 1rem 1rem;
 
 	@media only screen and (min-width: 600px) {
 		padding: 70px 2vw 2vw;
