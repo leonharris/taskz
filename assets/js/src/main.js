@@ -746,6 +746,35 @@ document.addEventListener('click', function (e) {
 	}
 });
 
+// Burger menu toggle (mobile)
+const burgerBtn = document.getElementById('burger-btn');
+const appNavbar = document.querySelector('.app-navbar');
+
+if (burgerBtn && appNavbar) {
+	burgerBtn.addEventListener('click', function (e) {
+		e.stopPropagation();
+		const isOpen = appNavbar.classList.toggle('is-open');
+		burgerBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+	});
+}
+
+// Close mobile menu when clicking outside the navbar
+document.addEventListener('click', function (e) {
+	if (appNavbar && appNavbar.classList.contains('is-open') && !appNavbar.contains(e.target)) {
+		appNavbar.classList.remove('is-open');
+		if (burgerBtn) burgerBtn.setAttribute('aria-expanded', 'false');
+	}
+});
+
+// Close mobile menu when a nav action is triggered
+document.addEventListener('click', function (e) {
+	const closeTriggers = ['add-list', 'btn-settings', 'btn-info'];
+	if (closeTriggers.some(id => e.target.id === id || e.target.closest('#' + id))) {
+		if (appNavbar) appNavbar.classList.remove('is-open');
+		if (burgerBtn) burgerBtn.setAttribute('aria-expanded', 'false');
+	}
+});
+
 // Sign-up & password reset handlers (disabled — UI removed, kept for future use)
 // let isSignUp = false;
 // const authToggle = document.getElementById('auth-toggle');
