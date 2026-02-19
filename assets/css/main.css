@@ -331,23 +331,25 @@ button {
   cursor: pointer;
 }
 
+/*
+// Scrollbar styling for dark theme
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+	width: 8px;
+	height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--pg-bg);
+	background: var(--pg-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-2);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--surface-3);
-}
+	background: var(--surface-2);
+	border-radius: 4px;
 
+	&:hover {
+		background: var(--surface-3);
+	}
+} */
 /* Buttons
 ------------------------------------------------ */
 .btn {
@@ -664,34 +666,27 @@ nav {
   .status-column {
     min-width: 280px;
     max-width: 320px;
-    margin-right: 20px;
+    margin-right: var(--space-m);
     overflow-y: auto;
     max-height: 100%;
     flex-shrink: 0;
   }
 }
-
-.status-column--wrap {
-  margin-bottom: 20px;
-}
-
 .status-column header {
   background-color: transparent;
   color: var(--color-headers);
-  padding: 10px 4px 14px;
-  margin: 0 0 16px;
+  padding: 0;
+  margin: 0 0 10px;
   font-weight: 600;
   display: flex;
   align-items: center;
   border-radius: 0;
   border: none;
-  border-bottom: 2px solid var(--status-color);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   gap: 2px;
 }
-
 .status-column header span.handle {
   display: block;
   height: 16px;
@@ -709,12 +704,17 @@ nav {
   opacity: 0.7;
 }
 
+.status-column--wrap {
+  margin-bottom: 20px;
+}
+
 .status-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
   margin-right: 8px;
+  display: none;
 }
 
 .btn-add-task-wrap {
