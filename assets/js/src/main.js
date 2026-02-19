@@ -16,6 +16,7 @@ let boardLoaded = false;
 let boardDirty = false;
 let lastSavedAt = null;
 let boardChannel = null;
+let activeFilter = 'all';
 
 function markDirty() {
   boardDirty = true;
@@ -276,7 +277,27 @@ function populateTasksFromData(tasks) {
 	}
 
 	activateSortable();
+	applyFilter(activeFilter);
 }
+
+function applyFilter(filter) {
+	activeFilter = filter;
+	document.querySelectorAll('.task').forEach(task => {
+		const matches = activeFilter === 'all' || task.dataset.priority === activeFilter;
+		task.classList.toggle('is-filtered-out', !matches);
+	});
+	document.querySelectorAll('.filter-btn').forEach(btn => {
+		btn.classList.toggle('is-active', btn.dataset.filter === activeFilter);
+	});
+}
+
+// Filter button clicks (toggle — click active filter to clear)
+document.addEventListener('click', (e) => {
+	const btn = e.target.closest('.filter-btn');
+	if (!btn) return;
+	const filter = btn.dataset.filter;
+	applyFilter(activeFilter === filter ? 'all' : filter);
+});
 
 /*
 * Realtime Sync
