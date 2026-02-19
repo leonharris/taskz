@@ -1,14 +1,28 @@
+@font-face {
+  font-family: "Brown";
+  src: url("../fonts/BrownStd-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Brown";
+  src: url("../fonts/BrownStd-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   --color-primary: #000;
-  --color-primary-hover: #b3e600;
+  --color-primary-hover: #000;
   --color-primary-text: #000000;
   --color-white: #ffffff;
   --color-black: #000000;
   --color-text: #000;
   --color-text-muted: #888888;
   --color-headers: #000;
-  --status-color: #ccff00;
-  --pg-bg: #f2f1ef;
+  --status-color: #000;
+  --pg-bg: #fff;
   --surface-1: #fff; /* Card background */
   --surface-2: #eee; /* Input/Secondary background */
   --surface-3: #999; /* Hover state */
@@ -19,7 +33,7 @@
   --border-color-light: #444444;
   --navbar-bg: rgba(12, 12, 12, 0); /* Glassmorphism base */
   --navbar-blur: 10px;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: "Brown", system-ui, -apple-system, sans-serif;
   --border-radius: 12px;
   --border-radius-sm: 8px;
   --border-radius-pill: 9999px; /* For buttons */
@@ -32,16 +46,16 @@
   --space-3xl: clamp(6.75rem, calc(6.49rem + 1.3vw), 7.5rem);
 }
 
-/* @link https://utopia.fyi/type/calculator?c=360,17,1.2,1240,18,1.333,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
+/* @link https://utopia.fyi/type/calculator?c=360,18,1.2,1240,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
 :root {
-  --step--2: clamp(0.6331rem, 0.7807rem + -0.1904vw, 0.7378rem);
-  --step--1: clamp(0.844rem, 0.9024rem + -0.0754vw, 0.8854rem);
-  --step-0: clamp(1.0625rem, 1.0369rem + 0.1136vw, 1.125rem);
-  --step-1: clamp(1.275rem, 1.1831rem + 0.4084vw, 1.4996rem);
-  --step-2: clamp(1.53rem, 1.3381rem + 0.8527vw, 1.999rem);
-  --step-3: clamp(1.836rem, 1.497rem + 1.5067vw, 2.6647rem);
-  --step-4: clamp(2.2032rem, 1.6514rem + 2.4524vw, 3.552rem);
-  --step-5: clamp(2.6438rem, 1.7884rem + 3.8018vw, 4.7348rem);
+  --step--2: clamp(0.7813rem, 0.7736rem + 0.0341vw, 0.8rem);
+  --step--1: clamp(0.9375rem, 0.9119rem + 0.1136vw, 1rem);
+  --step-0: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+  --step-1: clamp(1.35rem, 1.2631rem + 0.3864vw, 1.5625rem);
+  --step-2: clamp(1.62rem, 1.4837rem + 0.6057vw, 1.9531rem);
+  --step-3: clamp(1.944rem, 1.7405rem + 0.9044vw, 2.4414rem);
+  --step-4: clamp(2.3328rem, 2.0387rem + 1.3072vw, 3.0518rem);
+  --step-5: clamp(2.7994rem, 2.384rem + 1.8461vw, 3.8147rem);
 }
 
 /*
@@ -284,7 +298,7 @@ body {
   font-family: var(--font-sans);
   font-size: var(--step-0);
   line-height: 1.6;
-  font-weight: 300; /* Lighter weight for dark mode */
+  font-weight: 400;
   color: var(--color-text);
   background-color: var(--pg-bg);
   -webkit-text-size-adjust: 100%;
@@ -414,15 +428,17 @@ button {
 }
 
 /* Delete task button */
-.btn-delete-task-wrap {
-  text-align: right;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  padding-top: 8px;
+.task--top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
 
-.btn-delete-task {
-  margin-left: auto;
+.btn-delete-task-wrap {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
 
 .site-title {
@@ -493,7 +509,7 @@ nav {
   width: 100%;
   z-index: 100;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  height: 52px;
+  height: 70px;
 }
 @media only screen and (max-width: 599px) {
   .app-navbar {
@@ -507,7 +523,7 @@ nav {
 }
 .app-navbar--left .site-title {
   margin: 0;
-  font-size: var(--step-0);
+  font-size: var(--step-3);
 }
 
 .app-navbar--right {
@@ -617,11 +633,11 @@ nav {
 /* Site Container
 ------------------------------------------------*/
 .site-container {
-  padding: 88px 1rem 1rem;
+  padding: 88px 1rem 0;
 }
 @media only screen and (min-width: 600px) {
   .site-container {
-    padding: 70px 2vw 2vw;
+    padding: 70px 2vw 0;
     height: 100vh;
   }
 }
@@ -636,7 +652,6 @@ nav {
     display: flex;
     overflow-x: auto;
     height: 100%;
-    padding-bottom: 1rem;
   }
 }
 
@@ -710,7 +725,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 6px 0;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--border-radius-pill);
@@ -752,17 +767,22 @@ nav {
   -webkit-backdrop-filter: blur(16px);
   margin-bottom: 10px;
   padding: 18px 18px 14px;
-  border-left: 3px solid var(--status-color);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid var(--task-border-color, #ddd);
   cursor: grab;
   transition: all 0.25s ease;
   position: relative;
 }
+.task[data-priority=high] {
+  --task-border-color: #f87171;
+}
+.task[data-priority=medium] {
+  --task-border-color: #fbbf24;
+}
+.task[data-priority=low] {
+  --task-border-color: #4ade80;
+}
 .task:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.14);
-  border-left-color: var(--status-color);
-  border-top-color: rgba(255, 255, 255, 0.18);
   transform: translateY(-1px);
 }
 .task:hover .btn-delete-task-wrap {
@@ -816,9 +836,8 @@ nav {
 
 .task--content {
   font-size: var(--step--1);
-  margin-bottom: 4px;
   color: var(--color-text-muted);
-  line-height: 1.45;
+  line-height: 1.25;
 }
 
 /* Auth Container

@@ -8,10 +8,6 @@
 		<link rel="stylesheet" type="text/css" href="assets/css/main.css">
 		<!--<link rel="icon" href="/favicon.ico" sizes="any">-->
 		<link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-			rel="stylesheet">
 	</head>
 
 	<body>
@@ -45,6 +41,7 @@
 			<div class="app-navbar">
 				<div class="app-navbar--left">
 					<h1 class="site-title">taskz</h1>
+					<span id="user-email" class="user-email"></span>
 				</div>
 				<button id="burger-btn" class="burger-btn" aria-label="Toggle menu" aria-expanded="false">
 					<span class="burger-btn--bar"></span>
@@ -52,13 +49,9 @@
 					<span class="burger-btn--bar"></span>
 				</button>
 				<div class="app-navbar--right">
-					<span id="user-email" class="user-email"></span>
-					<div class="app-navbar--actions">
-						<button id="btn-settings" title="Settings"></button>
-						<button id="btn-info" title="Info"></button>
-					</div>
-					<button id="sign-out-btn" class="btn btn-secondary">Sign Out</button>
+					
 					<button id="add-list" class="btn">New category</button>
+					<button id="sign-out-btn" class="btn btn-secondary">Sign Out</button>
 				</div>
 			</div>
 

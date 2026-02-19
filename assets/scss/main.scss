@@ -23,7 +23,7 @@ body {
 	font-family: var(--font-sans);
 	font-size: var(--step-0);
 	line-height: 1.6;
-	font-weight: 300; /* Lighter weight for dark mode */
+	font-weight: 400;
 	color: var(--color-text);
 	background-color: var(--pg-bg);
 	// background-image: radial-gradient(circle at 50% 0%, var(--glow-color) 0%, transparent 60%);
@@ -165,15 +165,17 @@ button {
 }
 
 /* Delete task button */
-.btn-delete-task-wrap {
-	text-align: right;
-	opacity: 0;
-	transition: opacity 0.2s ease;
-	padding-top: 8px;
+.task--top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 4px;
 }
 
-.btn-delete-task {
-	margin-left: auto;
+.btn-delete-task-wrap {
+	opacity: 0;
+	transition: opacity 0.2s ease;
+	flex-shrink: 0;
 }
 
 .site-title {
@@ -247,7 +249,7 @@ nav {
 	width: 100%;
 	z-index: 100;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-	height: 52px;
+	height: 70px;
 
 	@media only screen and (max-width: 599px) {
 		height: 64px;
@@ -260,7 +262,7 @@ nav {
 
 	.site-title {
 		margin: 0;
-		font-size: var(--step-0);
+		font-size: var(--step-3);
 	}
 }
 
@@ -379,10 +381,10 @@ nav {
 /* Site Container
 ------------------------------------------------*/
 .site-container {
-	padding: 88px 1rem 1rem;
+	padding: 88px 1rem 0;
 
 	@media only screen and (min-width: 600px) {
-		padding: 70px 2vw 2vw;
+		padding: 70px 2vw 0;
 		height: 100vh;
 	}
 }
@@ -395,7 +397,6 @@ nav {
 		display: flex;
 		overflow-x: auto;
 		height: 100%;
-		padding-bottom: 1rem;
 	}
 }
 
@@ -469,7 +470,7 @@ nav {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		padding: 10px 16px;
+		padding: 6px 0;
 		background: rgba(255, 255, 255, 0.04);
 		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: var(--border-radius-pill);
@@ -516,18 +517,24 @@ nav {
 	margin-bottom: 10px;
 	padding: 18px 18px 14px;
 
-	border-left: 3px solid var(--status-color);
-	border-top: 1px solid rgba(255, 255, 255, 0.12);
+	border: 2px solid var(--task-border-color, #ddd);
 	cursor: grab;
 	// border-radius: var(--border-radius);
 	transition: all 0.25s ease;
 	position: relative;
 
+	&[data-priority="high"] {
+		--task-border-color: #f87171;
+	}
+	&[data-priority="medium"] {
+		--task-border-color: #fbbf24;
+	}
+	&[data-priority="low"] {
+		--task-border-color: #4ade80;
+	}
+
 	&:hover {
 		background: rgba(255, 255, 255, 0.07);
-		border-color: rgba(255, 255, 255, 0.14);
-		border-left-color: var(--status-color);
-		border-top-color: rgba(255, 255, 255, 0.18);
 		transform: translateY(-1px);
 
 		.btn-delete-task-wrap {
@@ -583,9 +590,8 @@ nav {
 
 .task--content {
 	font-size: var(--step--1);
-	margin-bottom: 4px;
 	color: var(--color-text-muted);
-	line-height: 1.45;
+	line-height: 1.25;
 }
 
 /* Auth Container
