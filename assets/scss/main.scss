@@ -183,6 +183,7 @@ button {
 	color: var(--color-primary);
 	font-size: var(--step-1);
 	letter-spacing: -0.02em;
+	line-height: 0;
 }
 
 .app-navbar .btn:not(.btn-secondary) {
@@ -259,6 +260,7 @@ nav {
 .app-navbar--left {
 	display: flex;
 	align-items: center;
+	gap: 1rem;
 
 	.site-title {
 		margin: 0;
@@ -393,6 +395,7 @@ nav {
 ------------------------------------------------*/
 #board {
 	margin: 0;
+	padding-bottom: 1rem;
 	@media only screen and (min-width: 600px) {
 		display: flex;
 		overflow-x: auto;
@@ -675,12 +678,7 @@ nav {
 }
 
 .user-email {
-	font-size: var(--step--2);
-	color: var(--color-text-muted);
-	padding: 4px 12px;
-	background-color: rgba(255, 255, 255, 0.04);
-	border-radius: var(--border-radius-pill);
-	border: 1px solid rgba(255, 255, 255, 0.06);
+	font-size: var(--step--1);
 }
 
 /* Sync Toast
