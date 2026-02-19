@@ -58,6 +58,7 @@
 				</div>
 
 				<button id="add-list" class="btn">New category</button>
+					<button id="btn-trash" class="btn btn-secondary">Trash</button>
 					<button id="sign-out-btn" class="btn btn-secondary">Sign Out</button>
 				</div>
 			</div>
@@ -127,6 +128,18 @@
 					</div>
 					<button type="submit" class="btn">Save task</button>
 				</form>
+			</div>
+		</modal>
+
+		<modal id="modal--trash" class="modal trash-modal">
+			<button id="close-trash-modal" class="btn modal--close"><img src="assets/icons/xmark-solid.svg"></button>
+			<div class="modal--wrap">
+				<div class="modal--header trash-modal--header">
+					<h2 class="modal--title">Trash</h2>
+					<p class="trash-modal--subtitle">Tasks are permanently deleted after 6 months.</p>
+					<button id="btn-empty-trash" class="btn btn-secondary btn-small">Empty trash</button>
+				</div>
+				<div id="trash-list" class="trash-list"></div>
 			</div>
 		</modal>
 

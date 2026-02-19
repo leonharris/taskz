@@ -17,6 +17,7 @@ let boardDirty = false;
 let lastSavedAt = null;
 let boardChannel = null;
 let activeFilter = 'all';
+let archivedTasks = [];
 
 function markDirty() {
   boardDirty = true;
@@ -127,7 +128,7 @@ async function saveBoardToSupabase() {
 	if (!currentUser) return;
 
 	const boardData = getBoardData();
-	if (!boardData.length) return;
+	if (!boardData.columns.length && !boardData.archived.length) return;
 
 	console.log('Saving board data:', boardData);
 
@@ -202,11 +203,22 @@ async function loadBoardFromSupabase() {
 		}
 
 		if (board && board.data) {
-			console.log('Populating board with', board.data.length, 'columns');
+			const rawData = board.data;
+			let columns, archived;
+			if (Array.isArray(rawData)) {
+				// Old format: just an array of columns
+				columns = rawData;
+				archived = [];
+			} else {
+				columns = rawData.columns || [];
+				archived = rawData.archived || [];
+			}
+			archivedTasks = purgeOldArchivedTasks(archived);
+			console.log('Populating board with', columns.length, 'columns,', archivedTasks.length, 'archived tasks');
 			// Clear existing board
 			document.getElementById('board').innerHTML = '';
 			// Populate from Supabase data
-			populateTasksFromData(board.data);
+			populateTasksFromData(columns);
 			subscribeToBoardChanges();
 		} else {
 			console.log('No board data found');
@@ -215,6 +227,13 @@ async function loadBoardFromSupabase() {
 	} catch (err) {
 		console.error('loadBoardFromSupabase threw:', err);
 	}
+}
+
+// Auto-purge archived tasks older than 6 months
+function purgeOldArchivedTasks(tasks) {
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - 6);
+  return tasks.filter(t => new Date(t.archivedAt) > cutoff);
 }
 
 // Get current board data as JSON
@@ -253,7 +272,7 @@ function getBoardData() {
 		});
 	}
 
-	return boardData;
+	return { columns: boardData, archived: archivedTasks };
 }
 
 // Populate tasks from data (used by both localStorage and Supabase)
@@ -576,7 +595,7 @@ function createList(blank_col, column_title, column_color) {
 ------------------------------------------- */
 
 
-// Delete task (event delegation)
+// Delete task (event delegation) — soft-delete into trash
 document.getElementById('board').addEventListener('click', (e) => {
 	const btn = e.target.closest('.btn-delete-task');
 	if (!btn) return;
@@ -584,6 +603,15 @@ document.getElementById('board').addEventListener('click', (e) => {
 	if (parentTask) {
 		let confirmation = confirm("Are you sure you want to delete this task?");
 		if (confirmation) {
+			const col = parentTask.closest('.status-column');
+			const colName = col ? col.querySelector('.status-column--header span[contenteditable]').textContent : '';
+			archivedTasks.push({
+				task_title: parentTask.querySelector('.task--title').textContent,
+				task_content: parentTask.querySelector('.task--content').textContent,
+				priority: parentTask.dataset.priority || 'none',
+				column: colName,
+				archivedAt: new Date().toISOString()
+			});
 			parentTask.remove();
 			markDirty();
 		}
@@ -711,6 +739,112 @@ taskDetailForm.addEventListener('submit', (e) => {
 
 	markDirty();
 	closeTaskDetailModal();
+});
+
+
+/*
+* Trash Modal
+*/
+
+const trashModal = document.getElementById('modal--trash');
+const trashList = document.getElementById('trash-list');
+
+function openTrashModal() {
+  renderTrashList();
+  trashModal.classList.add('is-visible');
+}
+
+function closeTrashModal() {
+  trashModal.classList.remove('is-visible');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderTrashList() {
+  if (!archivedTasks.length) {
+    trashList.innerHTML = '<p class="trash-empty">Trash is empty.</p>';
+    return;
+  }
+  trashList.innerHTML = '';
+  archivedTasks.forEach((task, i) => {
+    const date = new Date(task.archivedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    const item = document.createElement('div');
+    item.classList.add('trash-item');
+    item.innerHTML = `
+      <div class="trash-item--info">
+        <strong class="trash-item--title">${escapeHtml(task.task_title)}</strong>
+        <span class="trash-item--meta">${escapeHtml(task.column)} &middot; Deleted ${date}</span>
+      </div>
+      <div class="trash-item--actions">
+        <button class="btn btn-secondary btn-small btn-restore-task" data-index="${i}">Restore</button>
+        <button class="btn btn-danger btn-small btn-delete-forever" data-index="${i}">Delete forever</button>
+      </div>
+    `;
+    trashList.appendChild(item);
+  });
+}
+
+function restoreTask(index) {
+  const task = archivedTasks[index];
+  if (!task) return;
+
+  // Find target column by name, fall back to first column
+  let targetList = null;
+  document.querySelectorAll('.status-column').forEach(col => {
+    const name = col.querySelector('.status-column--header span[contenteditable]').textContent;
+    if (name === task.column) targetList = col.querySelector('.tasks-list');
+  });
+  if (!targetList) {
+    const firstCol = document.querySelector('.status-column');
+    if (firstCol) targetList = firstCol.querySelector('.tasks-list');
+  }
+
+  if (targetList) {
+    const taskEl = createTask(task.task_title, task.task_content, task.priority);
+    targetList.appendChild(taskEl);
+  }
+
+  archivedTasks.splice(index, 1);
+  markDirty();
+  renderTrashList();
+}
+
+function deleteForever(index) {
+  archivedTasks.splice(index, 1);
+  markDirty();
+  renderTrashList();
+}
+
+function emptyTrash() {
+  if (!archivedTasks.length) return;
+  if (confirm('Permanently delete all trashed tasks? This cannot be undone.')) {
+    archivedTasks = [];
+    markDirty();
+    renderTrashList();
+  }
+}
+
+document.getElementById('btn-trash').addEventListener('click', openTrashModal);
+document.getElementById('close-trash-modal').addEventListener('click', closeTrashModal);
+trashModal.addEventListener('click', (e) => {
+  if (e.target === trashModal) closeTrashModal();
+});
+document.getElementById('btn-empty-trash').addEventListener('click', emptyTrash);
+
+trashList.addEventListener('click', (e) => {
+  const restoreBtn = e.target.closest('.btn-restore-task');
+  if (restoreBtn) {
+    restoreTask(parseInt(restoreBtn.dataset.index));
+    return;
+  }
+  const deleteBtn = e.target.closest('.btn-delete-forever');
+  if (deleteBtn) {
+    deleteForever(parseInt(deleteBtn.dataset.index));
+  }
 });
 
 
