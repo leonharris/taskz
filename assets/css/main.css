@@ -434,7 +434,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .btn-delete-task-wrap {
@@ -763,8 +763,6 @@ nav {
 --------------------------------------------------*/
 .task {
   background: white;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   margin-bottom: 10px;
   padding: 18px 18px 14px;
   border: 2px solid var(--task-border-color, #ddd);
@@ -792,11 +790,10 @@ nav {
 .task--tags {
   display: flex;
   gap: 6px;
-  margin-bottom: 12px;
 }
 
 .task--tag {
-  font-size: var(--step--2);
+  font-size: calc(var(--step--2) * 0.95);
   font-weight: 700;
   text-transform: uppercase;
   padding: 3px 10px;
