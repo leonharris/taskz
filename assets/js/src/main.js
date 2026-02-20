@@ -223,6 +223,7 @@ async function loadBoardFromSupabase() {
 		} else {
 			console.log('No board data found');
 			subscribeToBoardChanges();
+			renderAddColumnButton();
 		}
 	} catch (err) {
 		console.error('loadBoardFromSupabase threw:', err);
@@ -297,6 +298,7 @@ function populateTasksFromData(tasks) {
 
 	activateSortable();
 	applyFilter(activeFilter);
+	renderAddColumnButton();
 }
 
 function applyFilter(filter) {
@@ -569,7 +571,12 @@ function createList(blank_col, column_title, column_color) {
 		task_list.appendChild(empty_task);
 	}
 
-	board.appendChild(column);
+	const inlineBtn = document.getElementById('add-list-inline');
+	if (inlineBtn) {
+	  board.insertBefore(column, inlineBtn);
+	} else {
+	  board.appendChild(column);
+	}
 
 	// SortableJS — column reordering (separate group from task lists)
 	new Sortable(board, {
@@ -589,6 +596,17 @@ function createList(blank_col, column_title, column_color) {
 
 }
 
+
+// Render the inline "New category" button at the end of the board
+function renderAddColumnButton() {
+  const existing = document.getElementById('add-list-inline');
+  if (existing) existing.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'add-list-inline';
+  wrap.classList.add('add-list-inline');
+  wrap.innerHTML = '<button class="add-list-inline--btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M432 256C432 264.8 424.8 272 416 272h-176V448c0 8.844-7.156 16.01-16 16.01S208 456.8 208 448V272H32c-8.844 0-16-7.15-16-15.99C16 247.2 23.16 240 32 240h176V64c0-8.844 7.156-15.99 16-15.99S240 55.16 240 64v176H416C424.8 240 432 247.2 432 256z"/></svg> New category</button>';
+  document.getElementById('board').appendChild(wrap);
+}
 
 /*
 * Delete buttons
@@ -622,12 +640,15 @@ document.getElementById('board').addEventListener('click', (e) => {
 // Modals
 
 const addListModal = document.getElementById('modal--add-list');
-const addListButton = document.querySelector('#add-list'); // add list button
 const closeModalButton = document.querySelector('#close-modal');
 
 // Event listeners
-addListButton.addEventListener("click", openModal);
 closeModalButton.addEventListener("click", closeModal);
+
+// Open "add category" modal from inline board button (event delegation)
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.add-list-inline--btn')) openModal();
+});
 
 // Open modal
 function openModal() {
@@ -848,6 +869,30 @@ trashList.addEventListener('click', (e) => {
 });
 
 
+/*
+* Overflow menu (···)
+*/
+const overflowBtn = document.getElementById('btn-overflow');
+const overflowMenu = document.getElementById('overflow-menu');
+
+overflowBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isOpen = overflowMenu.classList.toggle('is-open');
+  overflowBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+});
+
+document.addEventListener('click', (e) => {
+  if (overflowMenu.classList.contains('is-open') && !overflowBtn.closest('.overflow-menu-wrap').contains(e.target)) {
+    overflowMenu.classList.remove('is-open');
+    overflowBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+overflowMenu.addEventListener('click', () => {
+  overflowMenu.classList.remove('is-open');
+  overflowBtn.setAttribute('aria-expanded', 'false');
+});
+
 /* Data Persistence
 ---------------------------------------------------- */
 
@@ -927,7 +972,7 @@ document.addEventListener('click', function (e) {
 
 // Close mobile menu when a nav action is triggered
 document.addEventListener('click', function (e) {
-	const closeTriggers = ['add-list', 'btn-settings', 'btn-info'];
+	const closeTriggers = ['btn-trash', 'sign-out-btn', 'btn-settings', 'btn-info'];
 	if (closeTriggers.some(id => e.target.id === id || e.target.closest('#' + id))) {
 		if (appNavbar) appNavbar.classList.remove('is-open');
 		if (burgerBtn) burgerBtn.setAttribute('aria-expanded', 'false');

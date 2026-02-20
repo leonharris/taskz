@@ -57,9 +57,17 @@
 					<button class="filter-btn filter-btn--low" data-filter="low">Low</button>
 				</div>
 
-				<button id="add-list" class="btn">New category</button>
-					<button id="btn-trash" class="btn btn-secondary">Trash</button>
-					<button id="sign-out-btn" class="btn btn-secondary">Sign Out</button>
+				<div class="overflow-menu-wrap">
+					<button id="btn-overflow" class="btn-overflow" aria-label="More options" aria-expanded="false">
+						<span class="btn-overflow--dot"></span>
+						<span class="btn-overflow--dot"></span>
+						<span class="btn-overflow--dot"></span>
+					</button>
+					<div id="overflow-menu" class="overflow-menu">
+						<button id="btn-trash" class="overflow-menu--item">Trash</button>
+						<button id="sign-out-btn" class="overflow-menu--item">Sign Out</button>
+					</div>
+				</div>
 				</div>
 			</div>
 

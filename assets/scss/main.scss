@@ -812,3 +812,173 @@ nav {
 .task.is-filtered-out {
 	display: none;
 }
+
+/* Inline "New category" button (end of board)
+------------------------------------------------ */
+.add-list-inline {
+	flex-shrink: 0;
+
+	@media only screen and (min-width: 600px) {
+		min-width: 200px;
+		margin-right: var(--space-m);
+	}
+
+	@media only screen and (max-width: 599px) {
+		width: 100%;
+		margin-bottom: var(--space-m);
+	}
+}
+
+.add-list-inline--btn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 14px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px dashed rgba(255, 255, 255, 0.14);
+	border-radius: var(--border-radius);
+	color: var(--color-text-muted);
+	font-size: var(--step--2);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+
+	&:hover {
+		background: rgba(255, 255, 255, 0.07);
+		border-color: rgba(255, 255, 255, 0.25);
+		color: var(--color-headers);
+
+		svg path {
+			fill: var(--color-headers);
+		}
+	}
+
+	svg {
+		width: 13px;
+		height: 13px;
+		flex-shrink: 0;
+
+		path {
+			fill: var(--color-text-muted);
+			transition: fill 0.2s ease;
+		}
+	}
+}
+
+/* Overflow menu (···)
+------------------------------------------------ */
+.overflow-menu-wrap {
+	position: relative;
+}
+
+.btn-overflow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	width: 36px;
+	height: 36px;
+	border-radius: 6px;
+	color: var(--color-text-muted);
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+
+	&:hover {
+		background-color: rgba(255, 255, 255, 0.06);
+		color: var(--color-headers);
+	}
+
+	.btn-overflow--dot {
+		display: block;
+		width: 4px;
+		height: 4px;
+		background: currentColor;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	@media only screen and (max-width: 599px) {
+		display: none;
+	}
+}
+
+.overflow-menu {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	background: var(--surface-2);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	min-width: 160px;
+	z-index: 200;
+	padding: 4px;
+	opacity: 0;
+	transform: translateY(-6px);
+	pointer-events: none;
+	transition:
+		opacity 0.15s ease,
+		transform 0.15s ease;
+
+	&.is-open {
+		opacity: 1;
+		transform: translateY(0);
+		pointer-events: auto;
+	}
+
+	@media only screen and (max-width: 599px) {
+		position: static;
+		background: none;
+		border: none;
+		box-shadow: none;
+		padding: 0;
+		opacity: 1;
+		transform: none;
+		pointer-events: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		transition: none;
+	}
+}
+
+.overflow-menu--item {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 8px 12px;
+	border-radius: 4px;
+	font-size: var(--step--2);
+	font-weight: 500;
+	color: var(--color-text-muted);
+	letter-spacing: 0.04em;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+
+	&:hover {
+		background-color: rgba(255, 255, 255, 0.06);
+		color: var(--color-headers);
+	}
+
+	@media only screen and (max-width: 599px) {
+		background-color: transparent;
+		color: var(--color-text-muted);
+		border: 1px solid var(--border-color);
+		padding: 12px 18px;
+		text-align: center;
+		box-sizing: border-box;
+		border-radius: 0;
+
+		&:hover {
+			background-color: var(--surface-2);
+			border-color: var(--border-color-light);
+			color: var(--color-headers);
+		}
+	}
+}
