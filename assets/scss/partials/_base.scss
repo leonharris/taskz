@@ -22,6 +22,7 @@
 
 	--color-white: #ffffff;
 	--color-black: #000000;
+	--grey-500: #828ca2;
 	--color-text: #000;
 	--color-text-muted: #888888;
 	--color-headers: #000;
@@ -37,7 +38,7 @@
 	--tag-low-color: #4ade80;
 
 	// Backgrounds & Surfaces
-	--pg-bg: #f7f2f2;
+	--pg-bg: #f2f4f8;
 	--surface-1: #fff; /* Card background */
 	--surface-2: #eee; /* Input/Secondary background */
 	--surface-3: #999; /* Hover state */
@@ -58,8 +59,8 @@
 	--font-sans: "Brown", system-ui, -apple-system, sans-serif;
 
 	// Shapes
-	--border-radius: 12px;
-	--border-radius-sm: 8px;
+	--border-radius: 10px;
+	--border-radius-sm: 5px;
 	--border-radius-pill: 9999px; /* For buttons */
 
 	// Spacing
