@@ -22,12 +22,13 @@
 					<h2 id="auth-title">Sign In</h2>
 					<form id="auth-form">
 						<div class="form-field">
-							<input type="email" id="auth-email" placeholder="Email" required>
+							<input type="email" id="auth-email" placeholder="Email" required autocomplete="email">
 						</div>
 						<div class="form-field form-field--password">
-							<input type="password" id="auth-password" placeholder="Password" required>
+							<input type="password" id="auth-password" placeholder="Password" required autocomplete="current-password">
 							<button type="button" class="btn-toggle-password" aria-label="Show password">Show</button>
 						</div>
+						<p id="auth-error" class="auth-error" style="display:none;"></p>
 						<button type="submit" id="auth-submit" class="btn">Sign In</button>
 					</form>
 				</div>
@@ -90,16 +91,13 @@
 			<button id="close-modal" class="btn modal--close"><img src="assets/icons/xmark-solid.svg"></button>
 			<div class="modal--wrap">
 				<div class="modal--header">
-					<h2 class="modal--title">Add new task category</h2>
+					<h2 class="modal--title">New category</h2>
 				</div>
 				<form id="form--add-list">
 					<div class="form-field">
-						<input id="column_title" name="column_title" type="text" placeholder="Column title" required>
+						<input id="column_title" name="column_title" type="text" placeholder="e.g. In Progress, Done…" required>
 					</div>
-					<div class="form-field">
-						<div id="color-picker"></div>
-					</div>
-					<button type="submit" class="btn">Create category</button>
+					<button type="submit" class="btn">Create</button>
 				</form>
 			</div>
 		</modal>

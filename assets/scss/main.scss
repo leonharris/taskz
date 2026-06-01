@@ -56,6 +56,7 @@ button {
 	outline: 0;
 	background: none;
 	cursor: pointer;
+	border-radius: var(--border-radius-sm);
 }
 /*
 // Scrollbar styling for dark theme
@@ -470,6 +471,45 @@ nav {
 	display: none;
 }
 
+.column-count {
+	font-size: var(--step--3);
+	color: var(--color-text-muted);
+	font-weight: 600;
+	opacity: 0.5;
+	margin-left: 4px;
+}
+
+.btn-delete-col {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	opacity: 0;
+	color: var(--color-text-muted);
+	transition:
+		opacity 0.15s ease,
+		color 0.15s ease;
+
+	svg {
+		width: 9px;
+		height: 9px;
+		path {
+			fill: currentColor;
+		}
+	}
+
+	&:hover {
+		color: #f87171;
+	}
+}
+
+.status-column--header:hover .btn-delete-col {
+	opacity: 1;
+}
+
 .btn-add-task-wrap {
 	margin-bottom: 12px;
 
@@ -667,6 +707,13 @@ nav {
 		margin-top: var(--space-s);
 		padding: 16px;
 	}
+}
+
+.auth-error {
+	color: #f87171;
+	font-size: var(--step--2);
+	margin-bottom: var(--space-s);
+	text-align: left;
 }
 
 .auth-toggle-text {

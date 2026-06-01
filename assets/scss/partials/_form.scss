@@ -8,7 +8,7 @@ select {
 	border: 1px solid var(--border-color);
 	background-color: var(--surface-2);
 	color: var(--color-headers);
-	border-radius: 0;
+	border-radius: var(--border-radius-sm);
 	font-family: var(--font-sans);
 	font-size: var(--step-0);
 	transition: all 0.2s ease;

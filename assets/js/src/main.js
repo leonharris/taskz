@@ -1,5 +1,3 @@
-// iro.js
-import iro from '@jaames/iro';
 // sortableJS
 import Sortable from 'sortablejs';
 // Supabase
@@ -18,9 +16,19 @@ let lastSavedAt = null;
 let boardChannel = null;
 let activeFilter = 'all';
 let archivedTasks = [];
+let boardSortable = null;
 
 function markDirty() {
   boardDirty = true;
+  updateColumnCounts();
+}
+
+function updateColumnCounts() {
+  document.querySelectorAll('.status-column').forEach(col => {
+    const count = col.querySelectorAll('.task').length;
+    const badge = col.querySelector('.column-count');
+    if (badge) badge.textContent = count;
+  });
 }
 
 /*
@@ -43,18 +51,15 @@ function markDirty() {
 
 // Sign in with email/password
 async function signIn(email, password) {
-	console.log('Attempting sign in with:', email);
 	const { data, error } = await supabase.auth.signInWithPassword({
 		email,
 		password,
 	});
 	if (error) {
 		console.error('Sign in error:', error);
-		alert('Error signing in: ' + error.message);
-		return null;
+		return { error };
 	}
-	console.log('Sign in successful:', data);
-	return data;
+	return { data };
 }
 
 // Sign out
@@ -62,6 +67,7 @@ async function signOut() {
 	// Clear UI immediately — don't wait for Supabase (signOut hangs sometimes)
 	unsubscribeFromBoard();
 	currentUser = null;
+	boardSortable = null;
 	updateAuthUI();
 	document.getElementById('board').innerHTML = '';
 
@@ -130,53 +136,20 @@ async function saveBoardToSupabase() {
 	const boardData = getBoardData();
 	if (!boardData.columns.length && !boardData.archived.length) return;
 
-	console.log('Saving board data:', boardData);
+	const now = new Date().toISOString();
 
 	try {
-		// Check if user already has a board
-		console.log('Fetching existing board for user:', currentUser.id);
-		const { data: existingBoard, error: fetchError } = await supabase
+		const { error } = await supabase
 			.from('boards')
-			.select('id')
-			.eq('user_id', currentUser.id)
-			.single();
+			.upsert(
+				{ user_id: currentUser.id, data: boardData, updated_at: now },
+				{ onConflict: 'user_id' }
+			);
 
-		console.log('Fetch result:', { existingBoard, fetchError });
-
-		if (fetchError && fetchError.code !== 'PGRST116') {
-			console.error('Error fetching board:', fetchError);
-			return;
-		}
-
-		const now = new Date().toISOString();
-
-		if (existingBoard) {
-			// Update existing board
-			console.log('Updating board:', existingBoard.id);
-			const { error: updateError } = await supabase
-				.from('boards')
-				.update({ data: boardData, updated_at: now })
-				.eq('id', existingBoard.id);
-
-			if (updateError) {
-				console.error('Error updating board:', updateError);
-			} else {
-				console.log('Board updated successfully');
-				lastSavedAt = now;
-			}
+		if (error) {
+			console.error('Error saving board:', error);
 		} else {
-			// Insert new board
-			console.log('Inserting new board');
-			const { error: insertError } = await supabase
-				.from('boards')
-				.insert({ user_id: currentUser.id, data: boardData });
-
-			if (insertError) {
-				console.error('Error inserting board:', insertError);
-			} else {
-				console.log('Board inserted successfully');
-				lastSavedAt = now;
-			}
+			lastSavedAt = now;
 		}
 	} catch (err) {
 		console.error('saveBoardToSupabase threw:', err);
@@ -245,7 +218,7 @@ function getBoardData() {
 	for (let list of col) {
 		let list_id = list.id;
 		let col_el = document.getElementById(list_id);
-		let col_header_text = col_el.getElementsByTagName('header')[0].innerText;
+		let col_header_text = col_el.querySelector('.status-column--header span[contenteditable]').textContent.trim();
 		var col_color = getComputedStyle(col_el).getPropertyValue('--status-color');
 
 		let tasks = list.querySelectorAll('.task');
@@ -298,6 +271,7 @@ function populateTasksFromData(tasks) {
 
 	activateSortable();
 	applyFilter(activeFilter);
+	updateColumnCounts();
 	renderAddColumnButton();
 }
 
@@ -381,17 +355,6 @@ document.addEventListener('click', (e) => {
 });
 
 /*
-* Iro Colour Picker
-* Used to set list colour
-*/
-var colorPicker = new iro.ColorPicker("#color-picker", {
-	// Set the size of the color color-picker
-	width: 300,
-	// Set the initial color to pure red
-	color: "#f00"
-});
-
-/*
 // SortableJS
 // Set initial sorting for Task lists on screen
 */
@@ -419,13 +382,20 @@ function activateSortable() {
 	});
 }
 
+// Palette used to auto-assign column accent colours
+const COLUMN_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981', '#3b82f6'];
+
+function nextColumnColor() {
+	const count = document.querySelectorAll('.status-column').length;
+	return COLUMN_COLORS[count % COLUMN_COLORS.length];
+}
+
 // Add new List Column on form submit
 
 function getStatusFormData(form) {
 	const formData = new FormData(form);
 	const columnTitle = formData.get('column_title');
-	const hex = colorPicker.color.hexString || '#222';
-	createList(true, columnTitle, hex);
+	createList(true, columnTitle, nextColumnColor());
 }
 
 document.getElementById("form--add-list").addEventListener("submit", (event) => {
@@ -506,17 +476,22 @@ function createTask(task_title, task_content, task_priority) {
 // Add Column
 // Adds new list column
 
+function nextColumnId() {
+	let max = 0;
+	document.querySelectorAll('.status-column').forEach(col => {
+		const n = parseInt(col.id.replace('status_', ''), 10);
+		if (!isNaN(n) && n > max) max = n;
+	});
+	return 'status_' + (max + 1);
+}
+
 function createList(blank_col, column_title, column_color) {
 
-	const countStatusCols = document.querySelectorAll('.status-column').length;
 	const board = document.getElementById("board");
-
-	const title = column_title;
-	const color = column_color;
 
 	// create task div
 	let column = document.createElement("div");
-	column.setAttribute("id", "status_" + (countStatusCols + 1));
+	column.setAttribute("id", nextColumnId());
 	column.classList.add('status-column');
 	column.style.setProperty('--status-color', column_color);
 	let column_inner = document.createElement("div");
@@ -542,14 +517,17 @@ function createList(blank_col, column_title, column_color) {
 	header_text.contentEditable = "true";
 	header_text.addEventListener('input', markDirty);
 	column_header.appendChild(header_text);
-	
-	/*
-	// Edit list button
-	let btn_edit_list = document.createElement("button");
-	btn_edit_list.classList.add('btn-action', 'btn-edit-list');
-	btn_edit_list.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M441 58.9L453.1 71c9.4 9.4 9.4 24.6 0 33.9L424 134.1 377.9 88 407 58.9c9.4-9.4 24.6-9.4 33.9 0zM209.8 256.2L344 121.9 390.1 168 255.8 302.2c-2.9 2.9-6.5 5-10.4 6.1l-58.5 16.7 16.7-58.5c1.1-3.9 3.2-7.5 6.1-10.4zM373.1 25L175.8 222.2c-8.7 8.7-15 19.4-18.3 31.1l-28.6 100c-2.4 8.4-.1 17.4 6.1 23.6s15.2 8.5 23.6 6.1l100-28.6c11.8-3.4 22.5-9.7 31.1-18.3L487 138.9c28.1-28.1 28.1-73.7 0-101.8L474.9 25C446.8-3.1 401.2-3.1 373.1 25zM88 64C39.4 64 0 103.4 0 152V424c0 48.6 39.4 88 88 88H360c48.6 0 88-39.4 88-88V312c0-13.3-10.7-24-24-24s-24 10.7-24 24V424c0 22.1-17.9 40-40 40H88c-22.1 0-40-17.9-40-40V152c0-22.1 17.9-40 40-40H200c13.3 0 24-10.7 24-24s-10.7-24-24-24H88z"/></svg>';
-	column_header.appendChild(btn_edit_list);
-	*/
+
+	let count_badge = document.createElement("span");
+	count_badge.classList.add('column-count');
+	count_badge.textContent = '0';
+	column_header.appendChild(count_badge);
+
+	let btn_delete_col = document.createElement("button");
+	btn_delete_col.classList.add('btn-delete-col');
+	btn_delete_col.setAttribute('aria-label', 'Delete column');
+	btn_delete_col.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>';
+	column_header.appendChild(btn_delete_col);
 
 	// add the html into the list <header>
 	column_inner.appendChild(column_header);
@@ -578,16 +556,18 @@ function createList(blank_col, column_title, column_color) {
 	  board.appendChild(column);
 	}
 
-	// SortableJS — column reordering (separate group from task lists)
-	new Sortable(board, {
-		animation: 300,
-		delay: 200,
-		delayOnTouchOnly: true,
-		touchStartThreshold: 5,
-		handle: '.handle',
-		draggable: '.status-column',
-		onSort: markDirty,
-	})
+	// SortableJS — column reordering (only one instance per board)
+	if (!boardSortable) {
+		boardSortable = new Sortable(board, {
+			animation: 300,
+			delay: 200,
+			delayOnTouchOnly: true,
+			touchStartThreshold: 5,
+			handle: '.handle',
+			draggable: '.status-column',
+			onSort: markDirty,
+		});
+	}
 
 	// clear input fields after adding a new list
 	//todoInput.value = "";
@@ -637,6 +617,32 @@ document.getElementById('board').addEventListener('click', (e) => {
 });
 
 
+// Delete column (event delegation) — archives all tasks in it
+document.getElementById('board').addEventListener('click', (e) => {
+	const btn = e.target.closest('.btn-delete-col');
+	if (!btn) return;
+	const col = btn.closest('.status-column');
+	if (!col) return;
+	const colName = col.querySelector('.status-column--header span[contenteditable]').textContent.trim();
+	const taskCount = col.querySelectorAll('.task').length;
+	const msg = taskCount > 0
+		? `Delete "${colName}" and send its ${taskCount} task${taskCount === 1 ? '' : 's'} to trash?`
+		: `Delete the "${colName}" column?`;
+	if (!confirm(msg)) return;
+	col.querySelectorAll('.task').forEach(task => {
+		archivedTasks.push({
+			task_title: task.querySelector('.task--title').textContent,
+			task_content: task.querySelector('.task--content').textContent,
+			priority: task.dataset.priority || 'none',
+			column: colName,
+			archivedAt: new Date().toISOString()
+		});
+	});
+	col.remove();
+	markDirty();
+});
+
+
 // Modals
 
 const addListModal = document.getElementById('modal--add-list');
@@ -653,17 +659,46 @@ document.addEventListener('click', (e) => {
 // Open modal
 function openModal() {
 	addListModal.classList.add('is-visible');
+	// Focus the input after the transition starts
+	setTimeout(() => document.getElementById('column_title').focus(), 50);
 }
 // Close modal
 function closeModal() {
 	addListModal.classList.remove('is-visible');
+	document.getElementById('column_title').value = '';
 }
 // Close modal on backdrop click
 addListModal.addEventListener('click', (e) => {
 	if (e.target === addListModal) {
 		closeModal();
 	}
-})
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+	const isEditing = document.activeElement.tagName === 'INPUT' ||
+		document.activeElement.tagName === 'TEXTAREA' ||
+		document.activeElement.isContentEditable;
+
+	// N — add task to first column
+	if (e.key === 'n' && !isEditing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+		const firstCol = document.querySelector('.status-column');
+		if (firstCol) {
+			const taskList = firstCol.querySelector('.tasks-list');
+			const emptyTask = createTask('', '');
+			taskList.appendChild(emptyTask);
+			updateColumnCounts();
+			openTaskDetailModal(emptyTask);
+		}
+		return;
+	}
+
+	// Escape — close open modal
+	if (e.key !== 'Escape') return;
+	if (addListModal.classList.contains('is-visible')) closeModal();
+	if (taskDetailModal.classList.contains('is-visible')) closeTaskDetailModal();
+	if (trashModal.classList.contains('is-visible')) closeTrashModal();
+});
 
 
 /*
@@ -737,18 +772,15 @@ taskDetailForm.addEventListener('submit', (e) => {
 	// Update priority
 	const newPriority = taskDetailPriority.value;
 	activeTask.dataset.priority = newPriority;
-	// Update or create priority tag
 	let tagsDiv = activeTask.querySelector('.task--tags');
-	if (newPriority && newPriority !== 'none') {
-		if (!tagsDiv) {
-			tagsDiv = document.createElement('div');
-			tagsDiv.classList.add('task--tags');
-			activeTask.insertBefore(tagsDiv, activeTask.firstChild);
-		}
-		tagsDiv.innerHTML = `<span class="task--tag task--tag-${newPriority}">${newPriority}</span>`;
-	} else if (tagsDiv) {
-		tagsDiv.remove();
+	if (!tagsDiv) {
+		tagsDiv = document.createElement('div');
+		tagsDiv.classList.add('task--tags');
+		activeTask.querySelector('.task--top').prepend(tagsDiv);
 	}
+	tagsDiv.innerHTML = newPriority !== 'none'
+		? `<span class="task--tag task--tag-${newPriority}">${newPriority}</span>`
+		: '';
 
 	// Move task to new column if status changed
 	const targetColumnId = taskDetailStatus.value;
@@ -935,11 +967,25 @@ document.querySelectorAll('.btn-toggle-password').forEach(function (btn) {
 
 // Sign In form submit
 if (authForm) {
+	const authSubmit = document.getElementById('auth-submit');
+	const authError = document.getElementById('auth-error');
+
 	authForm.addEventListener('submit', async function (e) {
 		e.preventDefault();
+		authError.style.display = 'none';
+		authSubmit.disabled = true;
+		authSubmit.textContent = 'Signing in…';
+
 		const email = document.getElementById('auth-email').value;
 		const password = document.getElementById('auth-password').value;
-		await signIn(email, password);
+		const result = await signIn(email, password);
+
+		if (result.error) {
+			authError.textContent = result.error.message;
+			authError.style.display = 'block';
+			authSubmit.disabled = false;
+			authSubmit.textContent = 'Sign In';
+		}
 	});
 }
 
