@@ -738,8 +738,7 @@ nav {
 }
 @media only screen and (min-width: 600px) {
   .site-container {
-    padding: 70px var(--space-l) 0;
-    height: 100vh;
+    padding: 70px 0 0 var(--space-l);
   }
 }
 
