@@ -1,7 +1,7 @@
-@import "partials/base";
-@import "partials/reset";
-@import "partials/modal";
-@import "partials/form";
+@use "partials/base";
+@use "partials/reset";
+@use "partials/modal";
+@use "partials/form";
 
 body,
 html {
@@ -254,6 +254,7 @@ nav {
 	width: 100%;
 	z-index: 100;
 	height: 70px;
+	border-bottom: 1px solid #ddd;
 
 	@media only screen and (max-width: 599px) {
 		height: 64px;
