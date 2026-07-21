@@ -67,7 +67,10 @@ async function signOut() {
 	// Clear UI immediately — don't wait for Supabase (signOut hangs sometimes)
 	unsubscribeFromBoard();
 	currentUser = null;
-	boardSortable = null;
+	if (boardSortable) {
+		boardSortable.destroy();
+		boardSortable = null;
+	}
 	updateAuthUI();
 	document.getElementById('board').innerHTML = '';
 
@@ -100,7 +103,6 @@ function updateAuthUI() {
 
 // Listen for auth state changes
 supabase.auth.onAuthStateChange((event, session) => {
-	console.log('Auth state change:', event);
 	currentUser = session?.user || null;
 	updateAuthUI();
 
@@ -129,12 +131,12 @@ async function checkAuth() {
 * Supabase Data Functions
 */
 
-// Save board to Supabase
+// Save board to Supabase. Returns true on success, false on failure.
 async function saveBoardToSupabase() {
-	if (!currentUser) return;
+	if (!currentUser) return true;
 
 	const boardData = getBoardData();
-	if (!boardData.columns.length && !boardData.archived.length) return;
+	if (!boardData.columns.length && !boardData.archived.length) return true;
 
 	const now = new Date().toISOString();
 
@@ -148,11 +150,13 @@ async function saveBoardToSupabase() {
 
 		if (error) {
 			console.error('Error saving board:', error);
-		} else {
-			lastSavedAt = now;
+			return false;
 		}
+		lastSavedAt = now;
+		return true;
 	} catch (err) {
 		console.error('saveBoardToSupabase threw:', err);
+		return false;
 	}
 }
 
@@ -161,14 +165,11 @@ async function loadBoardFromSupabase() {
 	if (!currentUser) return;
 
 	try {
-		console.log('Loading board for user:', currentUser.id);
 		const { data: board, error } = await supabase
 			.from('boards')
 			.select('data')
 			.eq('user_id', currentUser.id)
 			.single();
-
-		console.log('Load result:', { board, error });
 
 		if (error && error.code !== 'PGRST116') {
 			console.error('Error loading board:', error);
@@ -187,14 +188,12 @@ async function loadBoardFromSupabase() {
 				archived = rawData.archived || [];
 			}
 			archivedTasks = purgeOldArchivedTasks(archived);
-			console.log('Populating board with', columns.length, 'columns,', archivedTasks.length, 'archived tasks');
 			// Clear existing board
 			document.getElementById('board').innerHTML = '';
 			// Populate from Supabase data
 			populateTasksFromData(columns);
 			subscribeToBoardChanges();
 		} else {
-			console.log('No board data found');
 			subscribeToBoardChanges();
 			renderAddColumnButton();
 		}
@@ -228,13 +227,14 @@ function getBoardData() {
 		for (let task of tasks) {
 			let task_title_el = task.getElementsByClassName('task--title');
 			let task__title = task_title_el[0].textContent;
-			let task_content_el = task.getElementsByClassName('task--content');
-			let task__content = task_content_el[0].textContent;
+			let task__content = task.dataset.description || '';
 			task_data.push({
 				id: ii,
 				task_title: task__title,
 				task_content: task__content,
-				priority: task.dataset.priority || 'none'
+				priority: task.dataset.priority || 'none',
+				due_date: task.dataset.dueDate || '',
+				due_time: task.dataset.dueTime || ''
 			});
 			ii++;
 		}
@@ -263,7 +263,7 @@ function populateTasksFromData(tasks) {
 		var listCol = document.getElementsByClassName('tasks-list');
 
 		for (let task of task_items) {
-			let task_li = createTask(task.task_title, task.task_content, task.priority);
+			let task_li = createTask(task.task_title, task.task_content, task.priority, task.due_date, task.due_time);
 			listCol[i].appendChild(task_li);
 		}
 		i++;
@@ -368,16 +368,6 @@ function activateSortable() {
 			touchStartThreshold: 5,
 			group: 'task-list',
 			onSort: markDirty,
-			store: {
-				get: (sortable) => {
-					const order = localStorage.getItem(sortable.options.group.name);
-					return order ? order.split('|') : [];
-				},
-				set: (sortable) => {
-					const order = sortable.toArray();
-					localStorage.setItem(sortable.options.group.name, order.join('|'));
-				}
-			}
 		});
 	});
 }
@@ -413,6 +403,7 @@ document.addEventListener('click', (e) => {
 		const column = btn.closest('.status-column');
 		const taskListUL = column.querySelector('.tasks-list');
 		const emptyTask = createTask("", "");
+		emptyTask.dataset.isNew = 'true';
 		taskListUL.appendChild(emptyTask);
 		openTaskDetailModal(emptyTask);
 	}
@@ -424,7 +415,7 @@ document.addEventListener('click', (e) => {
 * Create task
 */
 
-function createTask(task_title, task_content, task_priority) {
+function createTask(task_title, task_content, task_priority, due_date, due_time) {
 
 	// create task data
 	let title_content = task_title ? task_title : "Task title";
@@ -462,13 +453,63 @@ function createTask(task_title, task_content, task_priority) {
 	// create task content
 	let task_content_div = document.createElement("div");
 	task_content_div.classList.add('task--content');
-	let task_content_text = document.createTextNode(content_content);
-	task_content_div.appendChild(task_content_text);
+	task_content_div.innerHTML = markdownToHtml(content_content);
 	task_li.appendChild(task_content_div);
+
+	// store raw (markdown) description text — task--content now holds rendered HTML
+	task_li.dataset.description = content_content;
+
+	// due date/time
+	task_li.dataset.dueDate = due_date || '';
+	task_li.dataset.dueTime = due_time || '';
+	renderDueDate(task_li, due_date, due_time);
 
 	// return the <li class="task">
 	return task_li;
 
+}
+
+// Format a due date (+ optional time) for display, e.g. "Jan 1, 2026" or "Jan 1, 2026, 3:00 PM"
+function formatDueDate(due_date, due_time) {
+	if (!due_date) return '';
+	const [y, m, d] = due_date.split('-').map(Number);
+	let text = new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+	if (due_time) {
+		const [hh, mm] = due_time.split(':').map(Number);
+		text += ', ' + new Date(y, m - 1, d, hh, mm).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+	}
+	return text;
+}
+
+// Whether a due date (+ optional time) is in the past
+function isDueOverdue(due_date, due_time) {
+	if (!due_date) return false;
+	const [y, m, d] = due_date.split('-').map(Number);
+	let due;
+	if (due_time) {
+		const [hh, mm] = due_time.split(':').map(Number);
+		due = new Date(y, m - 1, d, hh, mm);
+	} else {
+		due = new Date(y, m - 1, d, 23, 59, 59);
+	}
+	return due.getTime() < Date.now();
+}
+
+// Add/update/remove the due-date badge on a task card
+function renderDueDate(task_li, due_date, due_time) {
+	let due_el = task_li.querySelector('.task--due');
+	if (!due_date) {
+		if (due_el) due_el.remove();
+		return;
+	}
+	if (!due_el) {
+		due_el = document.createElement('div');
+		due_el.classList.add('task--due');
+		due_el.innerHTML = '<svg class="task--due-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM232 120c0-13.3 10.7-24 24-24s24 10.7 24 24V256c0 8.5-4.5 16.3-11.8 20.6l-96 56c-11.4 6.6-26.1 2.8-32.8-8.6s-2.8-26.1 8.6-32.8L232 243.4V120z"/></svg><span class="task--due-text"></span>';
+		task_li.appendChild(due_el);
+	}
+	due_el.dataset.state = isDueOverdue(due_date, due_time) ? 'overdue' : 'upcoming';
+	due_el.querySelector('.task--due-text').textContent = formatDueDate(due_date, due_time);
 }
 
 
@@ -605,8 +646,10 @@ document.getElementById('board').addEventListener('click', (e) => {
 			const colName = col ? col.querySelector('.status-column--header span[contenteditable]').textContent : '';
 			archivedTasks.push({
 				task_title: parentTask.querySelector('.task--title').textContent,
-				task_content: parentTask.querySelector('.task--content').textContent,
+				task_content: parentTask.dataset.description || '',
 				priority: parentTask.dataset.priority || 'none',
+				due_date: parentTask.dataset.dueDate || '',
+				due_time: parentTask.dataset.dueTime || '',
 				column: colName,
 				archivedAt: new Date().toISOString()
 			});
@@ -632,8 +675,10 @@ document.getElementById('board').addEventListener('click', (e) => {
 	col.querySelectorAll('.task').forEach(task => {
 		archivedTasks.push({
 			task_title: task.querySelector('.task--title').textContent,
-			task_content: task.querySelector('.task--content').textContent,
+			task_content: task.dataset.description || '',
 			priority: task.dataset.priority || 'none',
+			due_date: task.dataset.dueDate || '',
+			due_time: task.dataset.dueTime || '',
 			column: colName,
 			archivedAt: new Date().toISOString()
 		});
@@ -686,6 +731,7 @@ document.addEventListener('keydown', (e) => {
 		if (firstCol) {
 			const taskList = firstCol.querySelector('.tasks-list');
 			const emptyTask = createTask('', '');
+			emptyTask.dataset.isNew = 'true';
 			taskList.appendChild(emptyTask);
 			updateColumnCounts();
 			openTaskDetailModal(emptyTask);
@@ -709,8 +755,68 @@ const taskDetailForm = document.getElementById('form--task-detail');
 const taskDetailTitle = document.getElementById('task-detail-title');
 const taskDetailStatus = document.getElementById('task-detail-status');
 const taskDetailPriority = document.getElementById('task-detail-priority');
+const taskDetailDueDate = document.getElementById('task-detail-due-date');
+const taskDetailDueTime = document.getElementById('task-detail-due-time');
 const taskDetailDescription = document.getElementById('task-detail-description');
+const taskDetailEditorToolbar = document.getElementById('task-detail-editor-toolbar');
 let activeTask = null; // the <li> currently being edited
+
+// Auto-grow the description textarea as the user types
+taskDetailDescription.addEventListener('input', () => {
+	taskDetailDescription.style.height = 'auto';
+	taskDetailDescription.style.height = taskDetailDescription.scrollHeight + 'px';
+});
+
+// Wrap the current selection in the description textarea with markdown syntax
+function wrapSelection(textarea, prefix, suffix = prefix) {
+	const { selectionStart: start, selectionEnd: end, value } = textarea;
+	const selected = value.slice(start, end);
+	textarea.value = value.slice(0, start) + prefix + selected + suffix + value.slice(end);
+	textarea.focus();
+	textarea.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+	textarea.dispatchEvent(new Event('input'));
+}
+
+// Prefix each line of the current selection (expanded to full lines) with markdown syntax
+function prefixLines(textarea, makePrefix) {
+	const { selectionStart: start, selectionEnd: end, value } = textarea;
+	const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+	let lineEnd = value.indexOf('\n', end);
+	if (lineEnd === -1) lineEnd = value.length;
+	const block = value.slice(lineStart, lineEnd);
+	const newBlock = block.split('\n').map((line, i) => makePrefix(i) + line).join('\n');
+	textarea.value = value.slice(0, lineStart) + newBlock + value.slice(lineEnd);
+	textarea.focus();
+	textarea.setSelectionRange(lineStart, lineStart + newBlock.length);
+	textarea.dispatchEvent(new Event('input'));
+}
+
+// Insert a markdown link, using the selection as link text (or a placeholder)
+function insertMarkdownLink(textarea) {
+	const { selectionStart: start, selectionEnd: end, value } = textarea;
+	const linkText = value.slice(start, end) || 'link text';
+	const insertion = `[${linkText}](url)`;
+	textarea.value = value.slice(0, start) + insertion + value.slice(end);
+	textarea.focus();
+	const urlStart = start + linkText.length + 3; // past "[linkText]("
+	textarea.setSelectionRange(urlStart, urlStart + 3); // select placeholder "url"
+	textarea.dispatchEvent(new Event('input'));
+}
+
+taskDetailEditorToolbar.addEventListener('click', (e) => {
+	const btn = e.target.closest('button[data-md]');
+	if (!btn) return;
+	switch (btn.dataset.md) {
+		case 'bold': wrapSelection(taskDetailDescription, '**'); break;
+		case 'italic': wrapSelection(taskDetailDescription, '_'); break;
+		case 'strike': wrapSelection(taskDetailDescription, '~~'); break;
+		case 'code': wrapSelection(taskDetailDescription, '`'); break;
+		case 'quote': prefixLines(taskDetailDescription, () => '> '); break;
+		case 'ul': prefixLines(taskDetailDescription, () => '- '); break;
+		case 'ol': { let n = 1; prefixLines(taskDetailDescription, () => `${n++}. `); break; }
+		case 'link': insertMarkdownLink(taskDetailDescription); break;
+	}
+});
 
 // Open task detail modal on task click (event delegation)
 document.getElementById('board').addEventListener('click', (e) => {
@@ -726,8 +832,12 @@ function openTaskDetailModal(taskEl) {
 
 	// Populate fields from the task DOM
 	taskDetailTitle.value = taskEl.querySelector('.task--title').textContent;
-	taskDetailDescription.value = taskEl.querySelector('.task--content').textContent;
+	taskDetailDescription.value = taskEl.dataset.description || '';
+	taskDetailDescription.style.height = 'auto';
+	taskDetailDescription.style.height = taskDetailDescription.scrollHeight + 'px';
 	taskDetailPriority.value = taskEl.dataset.priority || 'none';
+	taskDetailDueDate.value = taskEl.dataset.dueDate || '';
+	taskDetailDueTime.value = taskEl.dataset.dueTime || '';
 
 	// Populate status dropdown with current columns
 	taskDetailStatus.innerHTML = '';
@@ -746,6 +856,12 @@ function openTaskDetailModal(taskEl) {
 }
 
 function closeTaskDetailModal() {
+	// Cancelling a brand-new task (via Escape/backdrop/close button, not save)
+	// should discard it instead of leaving a blank "Task title" card behind.
+	if (activeTask && activeTask.dataset.isNew) {
+		activeTask.remove();
+		updateColumnCounts();
+	}
 	taskDetailModal.classList.remove('is-visible');
 	activeTask = null;
 }
@@ -762,12 +878,14 @@ taskDetailModal.addEventListener('click', (e) => {
 taskDetailForm.addEventListener('submit', (e) => {
 	e.preventDefault();
 	if (!activeTask) return;
+	delete activeTask.dataset.isNew;
 
 	// Update task title
 	activeTask.querySelector('.task--title').textContent = taskDetailTitle.value;
 
 	// Update task content
-	activeTask.querySelector('.task--content').textContent = taskDetailDescription.value;
+	activeTask.dataset.description = taskDetailDescription.value;
+	activeTask.querySelector('.task--content').innerHTML = markdownToHtml(taskDetailDescription.value);
 
 	// Update priority
 	const newPriority = taskDetailPriority.value;
@@ -781,6 +899,11 @@ taskDetailForm.addEventListener('submit', (e) => {
 	tagsDiv.innerHTML = newPriority !== 'none'
 		? `<span class="task--tag task--tag-${newPriority}">${newPriority}</span>`
 		: '';
+
+	// Update due date/time
+	activeTask.dataset.dueDate = taskDetailDueDate.value || '';
+	activeTask.dataset.dueTime = taskDetailDueTime.value || '';
+	renderDueDate(activeTask, taskDetailDueDate.value, taskDetailDueTime.value);
 
 	// Move task to new column if status changed
 	const targetColumnId = taskDetailStatus.value;
@@ -815,6 +938,52 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// Apply inline markdown (bold/italic/strike/code/links) to an already-escaped line
+function inlineMarkdown(text) {
+	return text
+		.replace(/`([^`]+)`/g, '<code>$1</code>')
+		.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+		.replace(/~~([^~]+)~~/g, '<del>$1</del>')
+		.replace(/(^|[^_a-zA-Z0-9])_([^_]+)_(?!\w)/g, '$1<em>$2</em>')
+		.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+// Render a small, safe subset of Markdown (bold/italic/strike/code/links/lists/quotes) as HTML for display
+function markdownToHtml(text) {
+	if (!text) return '';
+	const lines = escapeHtml(text).split('\n');
+	let html = '';
+	let listType = null; // 'ul' | 'ol' | null
+
+	function closeList() {
+		if (listType) { html += `</${listType}>`; listType = null; }
+	}
+
+	lines.forEach(line => {
+		const ulMatch = line.match(/^[-*]\s+(.*)$/);
+		const olMatch = line.match(/^\d+\.\s+(.*)$/);
+		const quoteMatch = line.match(/^&gt;\s?(.*)$/);
+
+		if (ulMatch) {
+			if (listType !== 'ul') { closeList(); html += '<ul>'; listType = 'ul'; }
+			html += `<li>${inlineMarkdown(ulMatch[1])}</li>`;
+		} else if (olMatch) {
+			if (listType !== 'ol') { closeList(); html += '<ol>'; listType = 'ol'; }
+			html += `<li>${inlineMarkdown(olMatch[1])}</li>`;
+		} else if (quoteMatch) {
+			closeList();
+			html += `<blockquote>${inlineMarkdown(quoteMatch[1])}</blockquote>`;
+		} else if (line.trim() === '') {
+			closeList();
+		} else {
+			closeList();
+			html += `<p>${inlineMarkdown(line)}</p>`;
+		}
+	});
+	closeList();
+	return html;
 }
 
 function renderTrashList() {
@@ -857,7 +1026,7 @@ function restoreTask(index) {
   }
 
   if (targetList) {
-    const taskEl = createTask(task.task_title, task.task_content, task.priority);
+    const taskEl = createTask(task.task_title, task.task_content, task.priority, task.due_date, task.due_time);
     targetList.appendChild(taskEl);
   }
 
@@ -929,12 +1098,23 @@ overflowMenu.addEventListener('click', () => {
 ---------------------------------------------------- */
 
 // Auto-save to Supabase every 5 seconds (if logged in and board changed)
-const saveInterval = setInterval(function () {
-	if (currentUser && boardDirty) {
-		boardDirty = false;
-		saveBoardToSupabase();
-	}
+let saveInFlight = false;
+const saveInterval = setInterval(async function () {
+	if (!currentUser || !boardDirty || saveInFlight) return;
+	saveInFlight = true;
+	boardDirty = false;
+	const success = await saveBoardToSupabase();
+	if (!success) boardDirty = true; // retry on next tick
+	saveInFlight = false;
 }, 5000);
+
+// Warn before leaving with unsaved changes (autosave runs every 5s, so a
+// close/reload right after an edit can otherwise lose it silently)
+window.addEventListener('beforeunload', (e) => {
+	if (!boardDirty) return;
+	e.preventDefault();
+	e.returnValue = '';
+});
 
 // Initialize app - check auth state
 checkAuth();

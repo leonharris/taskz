@@ -88,7 +88,21 @@
 
 /* Task detail modal */
 .task-detail .modal--wrap {
-	max-width: 600px;
+	max-width: 640px;
+}
+
+.task-detail #form--task-detail > .form-field:last-of-type {
+	margin-bottom: 0;
+}
+
+.task-detail #form--task-detail > .btn {
+	margin-top: var(--space-m);
+}
+
+.modal--divider {
+	border: 0;
+	border-top: 1px solid var(--input-border-color);
+	margin: var(--space-m) 0;
 }
 
 .form-row {
@@ -106,6 +120,78 @@
 	color: var(--color-text-muted);
 	margin-bottom: 6px;
 	font-weight: 500;
+}
+
+/* Description formatting toolbar — visually fused to the textarea below it, as one editor block */
+.editor-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin-bottom: 0;
+	padding: 6px 8px;
+	background-color: var(--surface-2);
+	border: 1px solid var(--input-border-color);
+	border-top-left-radius: var(--border-radius-sm);
+	border-top-right-radius: var(--border-radius-sm);
+}
+
+.editor-toolbar--btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 28px;
+	height: 26px;
+	padding: 0 8px;
+	border-radius: 5px;
+	background: transparent;
+	color: var(--color-text-muted);
+	font-size: var(--step--2);
+	font-family: var(--font-sans);
+	line-height: 1;
+	transition: all 0.15s ease;
+
+	&:hover {
+		background-color: var(--color-white);
+		color: var(--color-headers);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+	}
+}
+
+.editor-toolbar--btn-bold {
+	font-weight: 700;
+}
+
+.editor-toolbar--btn-italic {
+	font-style: italic;
+}
+
+.editor-toolbar--btn-strike {
+	text-decoration: line-through;
+}
+
+.editor-toolbar--btn-code {
+	font-family: monospace;
+}
+
+.editor-toolbar--btn-quote {
+	font-size: var(--step-0);
+	font-weight: 700;
+}
+
+.editor-toolbar--divider {
+	width: 1px;
+	height: 18px;
+	background-color: var(--color-text-muted);
+	opacity: 0.25;
+	margin: 0 4px;
+}
+
+#task-detail-description {
+	resize: vertical;
+	min-height: 120px;
+	border-top: none;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
 }
 
 .underlay {

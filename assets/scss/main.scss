@@ -391,7 +391,34 @@ nav {
 ------------------------------------------------*/
 .site-container {
 	padding: 88px 1rem 0;
-
+	&:before,
+	&:after {
+		content: "";
+		display: block;
+		position: fixed;
+		border-radius: 50%;
+		filter: blur(120px);
+		pointer-events: none;
+		z-index: 0;
+	}
+	&:before {
+		width: 680px;
+		height: 680px;
+		filter: blur(120px);
+		opacity: 0.25;
+		top: 10%;
+		left: -10%;
+		background: radial-gradient(circle, #e8484c80, transparent 70%);
+	}
+	&:after {
+		width: 1000px;
+		height: 1000px;
+		filter: blur(120px);
+		opacity: 0.2;
+		bottom: 0%;
+		right: -10%;
+		background: radial-gradient(circle, #48c3e880, transparent 70%);
+	}
 	@media only screen and (min-width: 600px) {
 		padding: 70px 0 0 var(--space-l);
 	}
@@ -554,6 +581,8 @@ nav {
 	list-style: none;
 	padding-left: 0;
 	min-height: 20px;
+	position: relative;
+	z-index: 1;
 }
 
 /* Task Card
@@ -638,6 +667,69 @@ nav {
 	font-size: var(--step--1);
 	color: var(--color-text-muted);
 	line-height: 1.25;
+
+	p,
+	ul,
+	ol,
+	blockquote {
+		margin: 0 0 4px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	ul,
+	ol {
+		padding-left: 1.1em;
+	}
+
+	blockquote {
+		padding-left: 8px;
+		border-left: 2px solid currentColor;
+		opacity: 0.85;
+	}
+
+	code {
+		font-family: monospace;
+		background-color: rgba(0, 0, 0, 0.06);
+		padding: 1px 4px;
+		border-radius: 3px;
+	}
+
+	a {
+		color: inherit;
+		text-decoration: underline;
+	}
+}
+
+.task--due {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-top: 10px;
+	font-size: var(--step--2);
+	font-weight: 600;
+	color: var(--color-text-muted);
+
+	&[data-state="overdue"] {
+		color: var(--tag-high-color);
+	}
+}
+
+.task--due-icon {
+	width: 12px;
+	height: 12px;
+	fill: currentColor;
+	flex-shrink: 0;
+}
+
+.task:hover .task--due {
+	color: rgba(255, 255, 255, 0.7);
+
+	&[data-state="overdue"] {
+		color: var(--tag-high-color);
+	}
 }
 
 /* Auth Container

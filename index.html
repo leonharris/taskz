@@ -128,8 +128,31 @@
 							</select>
 						</div>
 					</div>
+					<div class="form-row">
+						<div class="form-field">
+							<label for="task-detail-due-date">Due date</label>
+							<input id="task-detail-due-date" name="task_due_date" type="date">
+						</div>
+						<div class="form-field">
+							<label for="task-detail-due-time">Due time</label>
+							<input id="task-detail-due-time" name="task_due_time" type="time">
+						</div>
+					</div>
+					<hr class="modal--divider">
 					<div class="form-field">
 						<label for="task-detail-description">Description</label>
+						<div class="editor-toolbar" id="task-detail-editor-toolbar">
+							<button type="button" class="editor-toolbar--btn editor-toolbar--btn-bold" data-md="bold" title="Bold" aria-label="Bold">B</button>
+							<button type="button" class="editor-toolbar--btn editor-toolbar--btn-italic" data-md="italic" title="Italic" aria-label="Italic">I</button>
+							<button type="button" class="editor-toolbar--btn editor-toolbar--btn-strike" data-md="strike" title="Strikethrough" aria-label="Strikethrough">S</button>
+							<span class="editor-toolbar--divider"></span>
+							<button type="button" class="editor-toolbar--btn" data-md="link" title="Link" aria-label="Link">Link</button>
+							<button type="button" class="editor-toolbar--btn editor-toolbar--btn-code" data-md="code" title="Code" aria-label="Code">&lt;/&gt;</button>
+							<button type="button" class="editor-toolbar--btn editor-toolbar--btn-quote" data-md="quote" title="Quote" aria-label="Quote">&rdquo;</button>
+							<span class="editor-toolbar--divider"></span>
+							<button type="button" class="editor-toolbar--btn" data-md="ul" title="Bulleted list" aria-label="Bulleted list">&bull;</button>
+							<button type="button" class="editor-toolbar--btn" data-md="ol" title="Numbered list" aria-label="Numbered list">1.</button>
+						</div>
 						<textarea id="task-detail-description" name="task_description" placeholder="Task description ..." rows="6"></textarea>
 					</div>
 					<button type="submit" class="btn">Save task</button>
