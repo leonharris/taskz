@@ -54,6 +54,14 @@ Thumbs.db
 !CHANGELOG.md
 !.gitignore
 
+# Supabase schema is source, not a database dump — the *.sql rule above
+# would otherwise exclude it
+!supabase/schema/*.sql
+
+# Deno pulls these in when typechecking the Edge Function locally
+supabase/functions/**/node_modules/
+supabase/functions/**/deno.lock
+
 *node_modules/*
 
 # Environment variables

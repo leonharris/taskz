@@ -58,6 +58,11 @@
 					<button class="filter-btn filter-btn--low" data-filter="low">Low</button>
 				</div>
 
+				<button id="btn-suggestions" class="btn-suggestions" style="display: none;" aria-label="Suggested tasks from email">
+					<svg viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16l0 22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1l0-22.1c0-8.8-7.2-16-16-16L64 112zM48 212.2L48 384c0 8.8 7.2 16 16 16l384 0c8.8 0 16-7.2 16-16l0-171.8L322.9 328.8c-38.4 31.5-93.7 31.5-132.1 0L48 212.2zM0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128z"/></svg>
+					<span id="suggestions-count" class="btn-suggestions--count">0</span>
+				</button>
+
 				<div class="overflow-menu-wrap">
 					<button id="btn-overflow" class="btn-overflow" aria-label="More options" aria-expanded="false">
 						<span class="btn-overflow--dot"></span>
@@ -65,6 +70,7 @@
 						<span class="btn-overflow--dot"></span>
 					</button>
 					<div id="overflow-menu" class="overflow-menu">
+						<button id="btn-settings" class="overflow-menu--item">Settings</button>
 						<button id="btn-trash" class="overflow-menu--item">Trash</button>
 						<button id="sign-out-btn" class="overflow-menu--item">Sign Out</button>
 					</div>
@@ -103,8 +109,10 @@
 		</modal>
 
 		<modal id="modal--task-detail" class="modal task-detail">
-			<button class="btn modal--close modal--close-task"><img src="assets/icons/xmark-solid.svg"></button>
 			<div class="modal--wrap">
+				<button type="button" class="modal--close modal--close-task" aria-label="Close">
+					<svg viewBox="0 0 320 512" aria-hidden="true"><path fill="currentColor" d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg>
+				</button>
 				<div class="modal--header">
 					<h2 class="modal--title">Edit task</h2>
 				</div>
@@ -113,19 +121,30 @@
 						<label for="task-detail-title">Title</label>
 						<input id="task-detail-title" name="task_title" type="text" placeholder="Task title" required>
 					</div>
-					<div class="form-row">
-						<div class="form-field">
-							<label for="task-detail-status">Status</label>
-							<select id="task-detail-status" name="task_status"></select>
-						</div>
-						<div class="form-field">
-							<label for="task-detail-priority">Priority</label>
-							<select id="task-detail-priority" name="task_priority">
-								<option value="none">None</option>
-								<option value="low">Low</option>
-								<option value="medium">Medium</option>
-								<option value="high">High</option>
-							</select>
+					<div class="form-field">
+						<span class="form-field--label">Status</span>
+						<!-- Pills are rendered from the board's columns when the modal opens -->
+						<div id="task-detail-status" class="pill-group" role="radiogroup" aria-label="Status"></div>
+					</div>
+					<div class="form-field">
+						<span class="form-field--label">Priority</span>
+						<div id="task-detail-priority" class="pill-group pill-group--priority" role="radiogroup" aria-label="Priority">
+							<label class="pill pill--none">
+								<input type="radio" name="task_priority" value="none" checked>
+								<span>None</span>
+							</label>
+							<label class="pill pill--low">
+								<input type="radio" name="task_priority" value="low">
+								<span>Low</span>
+							</label>
+							<label class="pill pill--medium">
+								<input type="radio" name="task_priority" value="medium">
+								<span>Medium</span>
+							</label>
+							<label class="pill pill--high">
+								<input type="radio" name="task_priority" value="high">
+								<span>High</span>
+							</label>
 						</div>
 					</div>
 					<div class="form-row">
@@ -138,7 +157,6 @@
 							<input id="task-detail-due-time" name="task_due_time" type="time">
 						</div>
 					</div>
-					<hr class="modal--divider">
 					<div class="form-field">
 						<label for="task-detail-description">Description</label>
 						<div class="editor-toolbar" id="task-detail-editor-toolbar">
@@ -169,6 +187,86 @@
 					<button id="btn-empty-trash" class="btn btn-secondary btn-small">Empty trash</button>
 				</div>
 				<div id="trash-list" class="trash-list"></div>
+			</div>
+		</modal>
+
+		<modal id="modal--suggestions" class="modal suggestions-modal">
+			<button id="close-suggestions-modal" class="btn modal--close"><img src="assets/icons/xmark-solid.svg"></button>
+			<div class="modal--wrap">
+				<div class="modal--header suggestions-modal--header">
+					<h2 class="modal--title">From your email</h2>
+					<p class="suggestions-modal--subtitle">Things you said you&rsquo;d do. Accept one to add it to your board.</p>
+					<button id="btn-dismiss-all-suggestions" class="btn btn-secondary btn-small">Dismiss all</button>
+				</div>
+				<div id="suggestions-list" class="suggestions-list"></div>
+			</div>
+		</modal>
+
+		<modal id="modal--settings" class="modal settings-modal">
+			<button id="close-settings-modal" class="btn modal--close"><img src="assets/icons/xmark-solid.svg"></button>
+			<div class="modal--wrap">
+				<div class="modal--header">
+					<h2 class="modal--title">Settings</h2>
+				</div>
+
+				<form id="form--settings">
+					<div class="settings-section">
+						<div class="settings-toggle">
+							<label class="switch">
+								<input type="checkbox" id="settings-gmail-enabled">
+								<span class="switch--track"></span>
+							</label>
+							<div class="settings-toggle--text">
+								<strong>Scan sent email for commitments</strong>
+								<span>When you tell someone you&rsquo;ll do something, it shows up here as a suggested task.</span>
+							</div>
+						</div>
+
+						<div id="settings-gmail-options" class="settings-subsection" hidden>
+							<div class="form-field">
+								<span class="form-field--label">Add accepted tasks to</span>
+								<div id="settings-target-column" class="pill-group" role="radiogroup" aria-label="Target column"></div>
+							</div>
+
+							<div class="form-row">
+								<div class="form-field">
+									<label for="settings-scan-window">Look back (days)</label>
+									<input id="settings-scan-window" type="number" min="1" max="30" step="1">
+								</div>
+								<div class="form-field">
+									<label for="settings-min-confidence">Minimum confidence</label>
+									<input id="settings-min-confidence" type="number" min="0" max="1" step="0.05">
+								</div>
+							</div>
+
+							<div class="settings-relay">
+								<p class="settings-relay--intro">
+									Paste these into <code>integrations/gmail-relay.gs</code> in
+									<a href="https://script.google.com" target="_blank" rel="noopener noreferrer">Google Apps Script</a>, then run <code>setUp()</code> once.
+								</p>
+								<div class="form-field">
+									<label for="settings-ingest-url">Ingest URL</label>
+									<div class="copy-field">
+										<input id="settings-ingest-url" type="text" readonly>
+										<button type="button" class="btn btn-secondary btn-small btn-copy" data-copy-target="settings-ingest-url">Copy</button>
+									</div>
+								</div>
+								<div class="form-field">
+									<label for="settings-ingest-token">Ingest token</label>
+									<div class="copy-field">
+										<input id="settings-ingest-token" type="password" readonly>
+										<button type="button" class="btn btn-secondary btn-small btn-reveal" data-reveal-target="settings-ingest-token">Show</button>
+										<button type="button" class="btn btn-secondary btn-small btn-copy" data-copy-target="settings-ingest-token">Copy</button>
+									</div>
+									<p class="form-field--hint">Anyone with this token can post tasks to your board. Treat it like a password.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<p id="settings-status" class="settings-status" role="status"></p>
+					<button type="submit" class="btn">Save settings</button>
+				</form>
 			</div>
 		</modal>
 

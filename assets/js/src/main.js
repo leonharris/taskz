@@ -21,6 +21,7 @@ let boardSortable = null;
 function markDirty() {
   boardDirty = true;
   updateColumnCounts();
+  scheduleMasonry();
 }
 
 function updateColumnCounts() {
@@ -110,6 +111,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 	if (currentUser && !boardLoaded) {
 		boardLoaded = true;
 		loadBoardFromSupabase(); // fire-and-forget (no await)
+		loadGmailIntegration();  // same — awaiting here deadlocks the client
 	} else if (!currentUser) {
 		boardLoaded = false;
 	}
@@ -124,6 +126,7 @@ async function checkAuth() {
 	if (currentUser && !boardLoaded) {
 		boardLoaded = true;
 		await loadBoardFromSupabase();
+		await loadGmailIntegration();
 	}
 }
 
@@ -242,6 +245,7 @@ function getBoardData() {
 		boardData.push({
 			name: col_header_text,
 			color: col_color,
+			span: getColSpan(col_el),
 			tasks: task_data
 		});
 	}
@@ -258,7 +262,7 @@ function populateTasksFromData(tasks) {
 		let task_items = col.tasks;
 
 		let blank_col = false;
-		createList(blank_col, col_name, col_color);
+		createList(blank_col, col_name, col_color, col.span);
 
 		var listCol = document.getElementsByClassName('tasks-list');
 
@@ -332,6 +336,7 @@ function unsubscribeFromBoard() {
     supabase.removeChannel(boardChannel);
     boardChannel = null;
   }
+  unsubscribeFromSuggestions();
 }
 
 function showSyncToast() {
@@ -464,6 +469,8 @@ function createTask(task_title, task_content, task_priority, due_date, due_time)
 	task_li.dataset.dueTime = due_time || '';
 	renderDueDate(task_li, due_date, due_time);
 
+	observeTask(task_li);
+
 	// return the <li class="task">
 	return task_li;
 
@@ -526,15 +533,18 @@ function nextColumnId() {
 	return 'status_' + (max + 1);
 }
 
-function createList(blank_col, column_title, column_color) {
+function createList(blank_col, column_title, column_color, column_span) {
 
 	const board = document.getElementById("board");
+	const span = Math.min(Math.max(parseInt(column_span, 10) || 1, 1), MAX_COL_SPAN);
 
 	// create task div
 	let column = document.createElement("div");
 	column.setAttribute("id", nextColumnId());
 	column.classList.add('status-column');
 	column.style.setProperty('--status-color', column_color);
+	column.style.setProperty('--col-span', span);
+	if (span > 1) column.classList.add('status-column--wide');
 	let column_inner = document.createElement("div");
 	column_inner.classList.add('status-column--wrap');
 	column.appendChild(column_inner);
@@ -563,6 +573,11 @@ function createList(blank_col, column_title, column_color) {
 	count_badge.classList.add('column-count');
 	count_badge.textContent = '0';
 	column_header.appendChild(count_badge);
+
+	let btn_col_span = document.createElement("button");
+	btn_col_span.classList.add('btn-col-span');
+	updateColSpanButton(btn_col_span, span);
+	column_header.appendChild(btn_col_span);
 
 	let btn_delete_col = document.createElement("button");
 	btn_delete_col.classList.add('btn-delete-col');
@@ -660,6 +675,99 @@ document.getElementById('board').addEventListener('click', (e) => {
 });
 
 
+// Column width — how many task-columns wide a status column is (1 or 2)
+const MAX_COL_SPAN = 2;
+
+const ICON_EXPAND = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M32 64C14.3 64 0 78.3 0 96L0 416c0 17.7 14.3 32 32 32s32-14.3 32-32L64 96c0-17.7-14.3-32-32-32zm448 0c-17.7 0-32 14.3-32 32l0 320c0 17.7 14.3 32 32 32s32-14.3 32-32l0-320c0-17.7-14.3-32-32-32zM342.6 233.4l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L242.7 224 173.3 224l9.4-9.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-9.4-9.4 69.5 0-9.4 9.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3z"/></svg>';
+const ICON_COLLAPSE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M32 64C14.3 64 0 78.3 0 96L0 416c0 17.7 14.3 32 32 32s32-14.3 32-32L64 96c0-17.7-14.3-32-32-32zm448 0c-17.7 0-32 14.3-32 32l0 320c0 17.7 14.3 32 32 32s32-14.3 32-32l0-320c0-17.7-14.3-32-32-32zM169.4 278.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l9.4 9.4 69.5 0-9.4-9.4zM297.4 233.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-9.4 9.4-69.5 0 9.4 9.4z"/></svg>';
+
+function getColSpan(col) {
+	const raw = parseInt(col.style.getPropertyValue('--col-span'), 10);
+	return raw >= 1 && raw <= MAX_COL_SPAN ? raw : 1;
+}
+
+function setColSpan(col, span) {
+	const clamped = Math.min(Math.max(parseInt(span, 10) || 1, 1), MAX_COL_SPAN);
+	col.style.setProperty('--col-span', clamped);
+	col.classList.toggle('status-column--wide', clamped > 1);
+	const btn = col.querySelector('.btn-col-span');
+	if (btn) updateColSpanButton(btn, clamped);
+	scheduleMasonry();
+}
+
+
+/*
+* Masonry layout for wide columns
+*
+* Wide columns lay tasks out in a real masonry grid so a short card doesn't
+* leave dead space under it. The list uses 1px grid rows; each card is given a
+* row span equal to its rendered height (plus one gap), which lets cards pack
+* upwards independently per column while staying in normal document flow —
+* which is what keeps SortableJS drag-and-drop working.
+*/
+
+let masonryFrame = null;
+
+const taskResizeObserver = typeof ResizeObserver !== 'undefined'
+	? new ResizeObserver(() => scheduleMasonry())
+	: null;
+
+// Batch layout into one frame — markDirty() fires on every keystroke
+function scheduleMasonry() {
+	if (masonryFrame) return;
+	masonryFrame = requestAnimationFrame(() => {
+		masonryFrame = null;
+		layoutMasonry();
+	});
+}
+
+function layoutMasonry() {
+	document.querySelectorAll('.status-column').forEach(col => {
+		const list = col.querySelector('.tasks-list');
+		if (!list) return;
+		const tasks = list.querySelectorAll('.task');
+
+		// Narrow columns (and mobile, where the grid collapses to one column)
+		// use plain flow — clear any spans left over from being wide.
+		if (!col.classList.contains('status-column--wide') || window.innerWidth < 600) {
+			tasks.forEach(task => { task.style.gridRowEnd = ''; });
+			return;
+		}
+
+		const gap = parseFloat(getComputedStyle(list).columnGap) || 0;
+		tasks.forEach(task => {
+			const height = task.getBoundingClientRect().height;
+			task.style.gridRowEnd = 'span ' + (Math.ceil(height) + Math.round(gap));
+		});
+	});
+}
+
+// Tasks resize when their text rewraps (column widened, description edited),
+// which changes the span they need — observe each card rather than guessing.
+function observeTask(task) {
+	if (taskResizeObserver) taskResizeObserver.observe(task);
+}
+
+window.addEventListener('resize', scheduleMasonry);
+
+function updateColSpanButton(btn, span) {
+	const wide = span > 1;
+	btn.innerHTML = wide ? ICON_COLLAPSE : ICON_EXPAND;
+	btn.setAttribute('aria-label', wide ? 'Make column narrow' : 'Make column wide');
+	btn.setAttribute('title', wide ? 'Narrow column' : 'Wide column');
+}
+
+// Toggle column width (event delegation)
+document.getElementById('board').addEventListener('click', (e) => {
+	const btn = e.target.closest('.btn-col-span');
+	if (!btn) return;
+	const col = btn.closest('.status-column');
+	if (!col) return;
+	setColSpan(col, getColSpan(col) === 1 ? MAX_COL_SPAN : 1);
+	markDirty();
+});
+
+
 // Delete column (event delegation) — archives all tasks in it
 document.getElementById('board').addEventListener('click', (e) => {
 	const btn = e.target.closest('.btn-delete-col');
@@ -744,6 +852,8 @@ document.addEventListener('keydown', (e) => {
 	if (addListModal.classList.contains('is-visible')) closeModal();
 	if (taskDetailModal.classList.contains('is-visible')) closeTaskDetailModal();
 	if (trashModal.classList.contains('is-visible')) closeTrashModal();
+	if (suggestionsModal.classList.contains('is-visible')) closeSuggestionsModal();
+	if (settingsModal.classList.contains('is-visible')) closeSettingsModal();
 });
 
 
@@ -760,6 +870,18 @@ const taskDetailDueTime = document.getElementById('task-detail-due-time');
 const taskDetailDescription = document.getElementById('task-detail-description');
 const taskDetailEditorToolbar = document.getElementById('task-detail-editor-toolbar');
 let activeTask = null; // the <li> currently being edited
+
+// Status/priority are pill groups (radios styled as toggles) rather than <select>s
+function getPillValue(group) {
+	const checked = group.querySelector('input:checked');
+	return checked ? checked.value : '';
+}
+
+function setPillValue(group, value) {
+	const inputs = Array.from(group.querySelectorAll('input'));
+	const match = inputs.find((input) => input.value === value) || inputs[0];
+	if (match) match.checked = true;
+}
 
 // Auto-grow the description textarea as the user types
 taskDetailDescription.addEventListener('input', () => {
@@ -835,21 +957,30 @@ function openTaskDetailModal(taskEl) {
 	taskDetailDescription.value = taskEl.dataset.description || '';
 	taskDetailDescription.style.height = 'auto';
 	taskDetailDescription.style.height = taskDetailDescription.scrollHeight + 'px';
-	taskDetailPriority.value = taskEl.dataset.priority || 'none';
+	setPillValue(taskDetailPriority, taskEl.dataset.priority || 'none');
 	taskDetailDueDate.value = taskEl.dataset.dueDate || '';
 	taskDetailDueTime.value = taskEl.dataset.dueTime || '';
 
-	// Populate status dropdown with current columns
+	// Populate status pills with current columns
 	taskDetailStatus.innerHTML = '';
 	const columns = document.querySelectorAll('.status-column');
 	const currentColumn = taskEl.closest('.status-column');
 	columns.forEach((col) => {
 		const name = col.querySelector('.status-column--header span[contenteditable]').textContent;
-		const option = document.createElement('option');
-		option.value = col.id;
-		option.textContent = name;
-		if (col === currentColumn) option.selected = true;
-		taskDetailStatus.appendChild(option);
+		const pill = document.createElement('label');
+		pill.classList.add('pill');
+
+		const radio = document.createElement('input');
+		radio.type = 'radio';
+		radio.name = 'task_status';
+		radio.value = col.id;
+		radio.checked = col === currentColumn;
+
+		const text = document.createElement('span');
+		text.textContent = name;
+
+		pill.append(radio, text);
+		taskDetailStatus.appendChild(pill);
 	});
 
 	taskDetailModal.classList.add('is-visible');
@@ -888,7 +1019,7 @@ taskDetailForm.addEventListener('submit', (e) => {
 	activeTask.querySelector('.task--content').innerHTML = markdownToHtml(taskDetailDescription.value);
 
 	// Update priority
-	const newPriority = taskDetailPriority.value;
+	const newPriority = getPillValue(taskDetailPriority) || 'none';
 	activeTask.dataset.priority = newPriority;
 	let tagsDiv = activeTask.querySelector('.task--tags');
 	if (!tagsDiv) {
@@ -906,9 +1037,9 @@ taskDetailForm.addEventListener('submit', (e) => {
 	renderDueDate(activeTask, taskDetailDueDate.value, taskDetailDueTime.value);
 
 	// Move task to new column if status changed
-	const targetColumnId = taskDetailStatus.value;
+	const targetColumnId = getPillValue(taskDetailStatus);
 	const currentColumn = activeTask.closest('.status-column');
-	if (currentColumn && currentColumn.id !== targetColumnId) {
+	if (targetColumnId && currentColumn && currentColumn.id !== targetColumnId) {
 		const targetList = document.getElementById(targetColumnId).querySelector('.tasks-list');
 		targetList.appendChild(activeTask);
 	}
@@ -1067,6 +1198,400 @@ trashList.addEventListener('click', (e) => {
   if (deleteBtn) {
     deleteForever(parseInt(deleteBtn.dataset.index));
   }
+});
+
+
+/*
+* Gmail suggestions & settings
+*
+* Suggestions live in their own table rather than in the board JSON: the board
+* is rewritten wholesale from the DOM every autosave, so anything written into
+* it server-side is clobbered within 5 seconds. Accepting a suggestion here
+* creates the task client-side and lets the normal autosave carry it.
+*/
+
+let userSettings = null;
+let pendingSuggestions = [];
+let suggestionsChannel = null;
+
+const DEFAULT_SETTINGS = {
+	gmail_enabled: false,
+	target_column: null,
+	scan_window_days: 2,
+	min_confidence: 0.4,
+};
+
+const suggestionsModal = document.getElementById('modal--suggestions');
+const suggestionsList = document.getElementById('suggestions-list');
+const suggestionsBtn = document.getElementById('btn-suggestions');
+const suggestionsCount = document.getElementById('suggestions-count');
+const settingsModal = document.getElementById('modal--settings');
+const settingsForm = document.getElementById('form--settings');
+const settingsStatus = document.getElementById('settings-status');
+const settingsGmailEnabled = document.getElementById('settings-gmail-enabled');
+const settingsGmailOptions = document.getElementById('settings-gmail-options');
+const settingsTargetColumn = document.getElementById('settings-target-column');
+
+async function loadGmailIntegration() {
+	if (!currentUser) return;
+	await loadSettings();
+	await loadSuggestions();
+	subscribeToSuggestions();
+}
+
+async function loadSettings() {
+	try {
+		const { data, error } = await supabase
+			.from('user_settings')
+			.select('*')
+			.eq('user_id', currentUser.id)
+			.maybeSingle();
+
+		if (error) {
+			console.error('Error loading settings:', error);
+			return;
+		}
+
+		if (data) {
+			userSettings = data;
+			return;
+		}
+
+		// First run — create the row so the ingest token is generated.
+		const { data: created, error: insertError } = await supabase
+			.from('user_settings')
+			.insert({ user_id: currentUser.id })
+			.select()
+			.single();
+
+		if (insertError) {
+			console.error('Error creating settings:', insertError);
+			return;
+		}
+		userSettings = created;
+	} catch (err) {
+		console.error('loadSettings threw:', err);
+	}
+}
+
+async function loadSuggestions() {
+	if (!currentUser) return;
+	try {
+		const { data, error } = await supabase
+			.from('task_suggestions')
+			.select('*')
+			.eq('user_id', currentUser.id)
+			.eq('status', 'pending')
+			.order('created_at', { ascending: false });
+
+		if (error) {
+			console.error('Error loading suggestions:', error);
+			return;
+		}
+		pendingSuggestions = data || [];
+		updateSuggestionsBadge();
+	} catch (err) {
+		console.error('loadSuggestions threw:', err);
+	}
+}
+
+function subscribeToSuggestions() {
+	if (suggestionsChannel || !currentUser) return;
+
+	suggestionsChannel = supabase
+		.channel('suggestion-changes')
+		.on(
+			'postgres_changes',
+			{
+				event: 'INSERT',
+				schema: 'public',
+				table: 'task_suggestions',
+				filter: `user_id=eq.${currentUser.id}`,
+			},
+			(payload) => {
+				if (payload.new.status !== 'pending') return;
+				if (pendingSuggestions.some((s) => s.id === payload.new.id)) return;
+				pendingSuggestions.unshift(payload.new);
+				updateSuggestionsBadge();
+				if (suggestionsModal.classList.contains('is-visible')) renderSuggestionsList();
+			}
+		)
+		.subscribe();
+}
+
+function unsubscribeFromSuggestions() {
+	if (suggestionsChannel) {
+		supabase.removeChannel(suggestionsChannel);
+		suggestionsChannel = null;
+	}
+	pendingSuggestions = [];
+	userSettings = null;
+	updateSuggestionsBadge();
+}
+
+function updateSuggestionsBadge() {
+	const count = pendingSuggestions.length;
+	suggestionsBtn.style.display = count ? 'flex' : 'none';
+	suggestionsCount.textContent = count;
+}
+
+/*
+* Suggestions modal
+*/
+
+function openSuggestionsModal() {
+	renderSuggestionsList();
+	suggestionsModal.classList.add('is-visible');
+}
+
+function closeSuggestionsModal() {
+	suggestionsModal.classList.remove('is-visible');
+}
+
+function renderSuggestionsList() {
+	if (!pendingSuggestions.length) {
+		suggestionsList.innerHTML = '<p class="suggestions-empty">Nothing waiting. New commitments show up here after the next scan.</p>';
+		return;
+	}
+
+	suggestionsList.innerHTML = '';
+	pendingSuggestions.forEach((s) => {
+		const item = document.createElement('div');
+		item.classList.add('suggestion-item');
+		item.dataset.id = s.id;
+
+		const meta = [];
+		if (s.recipient) meta.push('To ' + escapeHtml(s.recipient));
+		if (s.due_date) meta.push('Due ' + escapeHtml(formatDueDate(s.due_date, '')));
+		if (typeof s.confidence === 'number') meta.push(Math.round(s.confidence * 100) + '% sure');
+
+		const source = s.email_subject
+			? (s.email_link
+				? `<a href="${escapeHtml(s.email_link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.email_subject)}</a>`
+				: escapeHtml(s.email_subject))
+			: '';
+
+		item.innerHTML = `
+			<div class="suggestion-item--info">
+				<strong class="suggestion-item--title">${escapeHtml(s.title)}</strong>
+				${s.description ? `<p class="suggestion-item--desc">${escapeHtml(s.description)}</p>` : ''}
+				${meta.length ? `<span class="suggestion-item--meta">${meta.join(' &middot; ')}</span>` : ''}
+				${source ? `<span class="suggestion-item--source">From: ${source}</span>` : ''}
+			</div>
+			<div class="suggestion-item--actions">
+				<button class="btn btn-small btn-accept-suggestion" data-id="${escapeHtml(s.id)}">Add task</button>
+				<button class="btn btn-secondary btn-small btn-dismiss-suggestion" data-id="${escapeHtml(s.id)}">Dismiss</button>
+			</div>
+		`;
+		suggestionsList.appendChild(item);
+	});
+}
+
+/** Find the column the user chose in settings, falling back to the first one. */
+function resolveTargetList() {
+	const columns = Array.from(document.querySelectorAll('.status-column'));
+	if (!columns.length) return null;
+
+	const preferred = userSettings && userSettings.target_column;
+	if (preferred) {
+		const match = columns.find((col) => {
+			const name = col.querySelector('.status-column--header span[contenteditable]').textContent.trim();
+			return name === preferred;
+		});
+		if (match) return match.querySelector('.tasks-list');
+	}
+	return columns[0].querySelector('.tasks-list');
+}
+
+async function acceptSuggestion(id) {
+	const suggestion = pendingSuggestions.find((s) => s.id === id);
+	if (!suggestion) return;
+
+	const targetList = resolveTargetList();
+	if (!targetList) {
+		alert('Create a category first — there is nowhere to put the task yet.');
+		return;
+	}
+
+	let description = suggestion.description || '';
+	if (suggestion.email_link && suggestion.email_subject) {
+		if (description) description += '\n\n';
+		description += `[${suggestion.email_subject}](${suggestion.email_link})`;
+	}
+
+	const taskEl = createTask(suggestion.title, description, 'none', suggestion.due_date || '', '');
+	targetList.appendChild(taskEl);
+	updateColumnCounts();
+	scheduleMasonry();
+	markDirty();
+
+	await setSuggestionStatus([id], 'accepted');
+}
+
+async function dismissSuggestion(id) {
+	await setSuggestionStatus([id], 'dismissed');
+}
+
+async function dismissAllSuggestions() {
+	if (!pendingSuggestions.length) return;
+	if (!confirm(`Dismiss all ${pendingSuggestions.length} suggestions?`)) return;
+	await setSuggestionStatus(pendingSuggestions.map((s) => s.id), 'dismissed');
+}
+
+/** Update rows remotely, then drop them from the local pending list. */
+async function setSuggestionStatus(ids, status) {
+	// Update the UI first — the task is already on the board, and a failed
+	// status write only means the suggestion reappears on next load.
+	pendingSuggestions = pendingSuggestions.filter((s) => !ids.includes(s.id));
+	updateSuggestionsBadge();
+	renderSuggestionsList();
+
+	const { error } = await supabase
+		.from('task_suggestions')
+		.update({ status })
+		.in('id', ids);
+
+	if (error) console.error(`Error marking suggestion ${status}:`, error);
+}
+
+document.getElementById('btn-suggestions').addEventListener('click', openSuggestionsModal);
+document.getElementById('close-suggestions-modal').addEventListener('click', closeSuggestionsModal);
+suggestionsModal.addEventListener('click', (e) => {
+	if (e.target === suggestionsModal) closeSuggestionsModal();
+});
+document.getElementById('btn-dismiss-all-suggestions').addEventListener('click', dismissAllSuggestions);
+
+suggestionsList.addEventListener('click', (e) => {
+	const accept = e.target.closest('.btn-accept-suggestion');
+	if (accept) {
+		acceptSuggestion(accept.dataset.id);
+		return;
+	}
+	const dismiss = e.target.closest('.btn-dismiss-suggestion');
+	if (dismiss) dismissSuggestion(dismiss.dataset.id);
+});
+
+/*
+* Settings modal
+*/
+
+function openSettingsModal() {
+	if (!userSettings) {
+		alert('Settings are still loading — try again in a moment.');
+		return;
+	}
+
+	settingsGmailEnabled.checked = !!userSettings.gmail_enabled;
+	document.getElementById('settings-scan-window').value = userSettings.scan_window_days ?? DEFAULT_SETTINGS.scan_window_days;
+	document.getElementById('settings-min-confidence').value = userSettings.min_confidence ?? DEFAULT_SETTINGS.min_confidence;
+	document.getElementById('settings-ingest-url').value = `${supabaseUrl}/functions/v1/gmail-ingest`;
+
+	const tokenField = document.getElementById('settings-ingest-token');
+	tokenField.value = userSettings.ingest_token || '';
+	tokenField.type = 'password';
+	const revealBtn = document.querySelector('.btn-reveal');
+	if (revealBtn) revealBtn.textContent = 'Show';
+
+	// Column pills, from the board as it stands right now
+	settingsTargetColumn.innerHTML = '';
+	const columns = Array.from(document.querySelectorAll('.status-column'));
+	if (!columns.length) {
+		settingsTargetColumn.innerHTML = '<p class="form-field--hint">Create a category first.</p>';
+	} else {
+		columns.forEach((col, i) => {
+			const name = col.querySelector('.status-column--header span[contenteditable]').textContent.trim();
+			const pill = document.createElement('label');
+			pill.classList.add('pill');
+
+			const radio = document.createElement('input');
+			radio.type = 'radio';
+			radio.name = 'settings_target_column';
+			radio.value = name;
+			radio.checked = userSettings.target_column
+				? userSettings.target_column === name
+				: i === 0;
+
+			const text = document.createElement('span');
+			text.textContent = name;
+
+			pill.append(radio, text);
+			settingsTargetColumn.appendChild(pill);
+		});
+	}
+
+	settingsStatus.textContent = '';
+	settingsGmailOptions.hidden = !settingsGmailEnabled.checked;
+	settingsModal.classList.add('is-visible');
+}
+
+function closeSettingsModal() {
+	settingsModal.classList.remove('is-visible');
+}
+
+settingsGmailEnabled.addEventListener('change', () => {
+	settingsGmailOptions.hidden = !settingsGmailEnabled.checked;
+});
+
+settingsForm.addEventListener('submit', async (e) => {
+	e.preventDefault();
+	if (!currentUser || !userSettings) return;
+
+	const scanWindow = parseInt(document.getElementById('settings-scan-window').value, 10);
+	const minConfidence = parseFloat(document.getElementById('settings-min-confidence').value);
+
+	const update = {
+		gmail_enabled: settingsGmailEnabled.checked,
+		target_column: getPillValue(settingsTargetColumn) || null,
+		scan_window_days: Number.isFinite(scanWindow) ? Math.min(30, Math.max(1, scanWindow)) : DEFAULT_SETTINGS.scan_window_days,
+		min_confidence: Number.isFinite(minConfidence) ? Math.min(1, Math.max(0, minConfidence)) : DEFAULT_SETTINGS.min_confidence,
+	};
+
+	settingsStatus.textContent = 'Saving…';
+
+	const { data, error } = await supabase
+		.from('user_settings')
+		.update(update)
+		.eq('user_id', currentUser.id)
+		.select()
+		.single();
+
+	if (error) {
+		console.error('Error saving settings:', error);
+		settingsStatus.textContent = 'Could not save — ' + error.message;
+		return;
+	}
+
+	userSettings = data;
+	settingsStatus.textContent = 'Saved.';
+	setTimeout(() => { settingsStatus.textContent = ''; }, 2000);
+});
+
+document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+document.getElementById('close-settings-modal').addEventListener('click', closeSettingsModal);
+settingsModal.addEventListener('click', (e) => {
+	if (e.target === settingsModal) closeSettingsModal();
+});
+
+// Copy / reveal buttons in the relay credentials block
+settingsModal.addEventListener('click', (e) => {
+	const copyBtn = e.target.closest('.btn-copy');
+	if (copyBtn) {
+		const field = document.getElementById(copyBtn.dataset.copyTarget);
+		navigator.clipboard.writeText(field.value).then(() => {
+			const original = copyBtn.textContent;
+			copyBtn.textContent = 'Copied';
+			setTimeout(() => { copyBtn.textContent = original; }, 1500);
+		});
+		return;
+	}
+
+	const revealBtn = e.target.closest('.btn-reveal');
+	if (revealBtn) {
+		const field = document.getElementById(revealBtn.dataset.revealTarget);
+		const hidden = field.type === 'password';
+		field.type = hidden ? 'text' : 'password';
+		revealBtn.textContent = hidden ? 'Hide' : 'Show';
+	}
 });
 
 

@@ -420,7 +420,9 @@ nav {
 		background: radial-gradient(circle, #48c3e880, transparent 70%);
 	}
 	@media only screen and (min-width: 600px) {
-		padding: 70px 0 0 var(--space-l);
+		// No horizontal padding here — the gutter lives on #board so columns
+		// scroll flush to the viewport edge instead of being clipped early.
+		padding: 70px 0 0;
 	}
 }
 
@@ -433,21 +435,35 @@ nav {
 		display: flex;
 		overflow-x: auto;
 		height: 100%;
+		// Gutter belongs to the scroll container: it shows at scroll start and
+		// columns pass under it, staying flush to the edges while scrolling.
+		padding-left: var(--space-l);
 	}
 }
 
 /* Tasks List / Columns
 ------------------------------------------------*/
 .status-column {
+	--col-span: 1;
+	// Space either side of the divider line. Added back onto the width below so
+	// the track stays 280–320px per span regardless of the gutter.
+	--col-gutter: var(--space-xs);
 	width: 100%;
 
 	@media only screen and (min-width: 600px) {
-		min-width: 280px;
-		max-width: 320px;
-		margin-right: var(--space-xs);
+		min-width: calc(280px * var(--col-span) + var(--space-xs) * (var(--col-span) - 1) + var(--col-gutter) + 1px);
+		max-width: calc(320px * var(--col-span) + var(--space-xs) * (var(--col-span) - 1) + var(--col-gutter) + 1px);
+		padding-right: var(--col-gutter);
+		margin-right: var(--col-gutter);
+		border-right: 1px solid var(--col-divider);
 		overflow-y: auto;
 		max-height: 100%;
 		flex-shrink: 0;
+
+		// No trailing divider before the "New category" button
+		&:has(+ .add-list-inline) {
+			border-right-color: transparent;
+		}
 	}
 
 	header {
@@ -504,10 +520,41 @@ nav {
 	font-weight: 600;
 	opacity: 0.5;
 	margin-left: 4px;
+	margin-right: auto;
+}
+
+.btn-col-span {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	opacity: 0;
+	color: var(--color-text-muted);
+	transition:
+		opacity 0.15s ease,
+		color 0.15s ease;
+
+	svg {
+		width: 11px;
+		height: 11px;
+		path {
+			fill: currentColor;
+		}
+	}
+
+	&:hover {
+		color: var(--color-text);
+	}
+
+	// Widening only makes sense in the horizontal board layout
+	@media only screen and (min-width: 600px) {
+		display: flex;
+	}
 }
 
 .btn-delete-col {
-	margin-left: auto;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -533,7 +580,8 @@ nav {
 	}
 }
 
-.status-column--header:hover .btn-delete-col {
+.status-column--header:hover .btn-delete-col,
+.status-column--header:hover .btn-col-span {
 	opacity: 1;
 }
 
@@ -583,13 +631,32 @@ nav {
 	min-height: 20px;
 	position: relative;
 	z-index: 1;
+	display: grid;
+	gap: var(--space-xs);
+
+	// Single column on mobile regardless of span — no room for 2 across
+	@media only screen and (min-width: 600px) {
+		grid-template-columns: repeat(var(--col-span), minmax(0, 1fr));
+	}
+}
+
+/* Masonry (wide columns only)
+   1px rows + JS-assigned row spans: cards keep their natural height and pack
+   upwards instead of aligning to the tallest card in the row. Row gap is baked
+   into each card's span (see layoutMasonry) so it stays 0 here. */
+@media only screen and (min-width: 600px) {
+	.status-column--wide .tasks-list {
+		grid-auto-rows: 1px;
+		row-gap: 0;
+		column-gap: var(--space-xs);
+		align-items: start;
+	}
 }
 
 /* Task Card
 --------------------------------------------------*/
 .task {
 	background: white;
-	margin-bottom: var(--space-xs);
 	padding: 18px 18px 14px;
 	border: 0 solid var(--task-border-color, #ddd);
 	cursor: grab;
