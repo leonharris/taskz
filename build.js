@@ -31,6 +31,7 @@ const buildOptions = {
   define: {
     'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL || ''),
     'process.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY || ''),
+    'process.env.TURNSTILE_SITE_KEY': JSON.stringify(env.TURNSTILE_SITE_KEY || ''),
   },
 };
 

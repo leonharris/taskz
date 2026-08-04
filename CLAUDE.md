@@ -1,4 +1,4 @@
-# Taskz
+# Slate
 
 Vanilla JS task board app with Supabase backend. No framework — single HTML page with show/hide views.
 
@@ -23,6 +23,11 @@ Vanilla JS task board app with Supabase backend. No framework — single HTML pa
 ## Architecture
 
 - **Auth:** Supabase Auth (email/password). Sign-up, sign-in, password reset, sign-out.
+- **Bot protection:** Cloudflare Turnstile on the sign-in form, verified by
+  Supabase server-side (Auth → Attack Protection). Needs `TURNSTILE_SITE_KEY` in
+  `.env`; with no key the code is inert and sign-in works unprotected. Client-only
+  measures are pointless here — the anon key is public, so anything not enforced
+  by Supabase can be bypassed by posting to the auth endpoint directly.
 - **Data:** Supabase Postgres. `boards` table with JSON column. Auto-saves every 5 seconds.
 - **Script loading:** `<script defer>` — do NOT use `async` or wrap listeners in `DOMContentLoaded`.
 - **Sign-out:** UI clears immediately; `supabase.auth.signOut()` fires in background (it hangs sometimes).

@@ -1,7 +1,7 @@
 # Gmail → task suggestions
 
 Scans your sent mail for things you said you'd do and queues them as
-reviewable suggestions in Taskz.
+reviewable suggestions in Slate.
 
 **Status: code complete, not yet deployed.** Everything below under
 "Still to do" is manual setup — nothing has been run against your Supabase
@@ -26,7 +26,7 @@ Gmail (your account)
        └─ gmail-ingest       authenticates by token, checks the toggle,
             │                skips already-seen IDs, extracts via Claude
             └─ task_suggestions (table)
-                 └─ Taskz badge → review modal → you accept → task on board
+                 └─ Slate badge → review modal → you accept → task on board
 ```
 
 ### Why suggestions live in their own table
@@ -83,7 +83,7 @@ supabase functions deploy gmail-ingest --no-verify-jwt
 ingest token, not a Supabase JWT; without the flag every request 401s before
 reaching the function.
 
-### 4. Turn it on in Taskz
+### 4. Turn it on in Slate
 
 Load the app (this creates your `user_settings` row and generates the token),
 then ··· → **Settings**:
@@ -110,7 +110,7 @@ the whole reason for this approach over a Google OAuth app.
 
 - **Apps Script** → Executions — should log `Sent N message(s); M suggestion(s) created.`
 - **Supabase** → `select * from task_suggestions order by created_at desc;`
-- **Taskz** — envelope badge in the navbar
+- **Slate** — envelope badge in the navbar
 
 Look at the first real batch before trusting the badge. The prompt is
 deliberately biased toward returning nothing, so expect misses before false
@@ -131,6 +131,10 @@ positives. If it's too eager or too shy, the prompt is `SYSTEM_PROMPT` in
 | Max emails per run | `MAX_MESSAGES` / `MAX_BATCH` | 25 |
 | Body truncation | `MAX_BODY_CHARS` | 6000 chars |
 
+Each scan sends **one message per thread** — the most recent one you sent —
+with the quoted history stripped off the bottom (`stripQuotedText()`). So a
+long back-and-forth costs one short extraction per scan, not one per reply.
+
 Switching to `claude-haiku-4-5` is a one-line change in `MODEL` and cuts cost
 roughly 5×, at some loss of judgement on ambiguous phrasing.
 
@@ -150,7 +154,7 @@ real change in where your mail goes.
 |---|---|
 | Script throws on `INGEST_URL` | Placeholders not replaced (step 4) |
 | HTTP 401 `unknown token` | Token mismatch, or function deployed without `--no-verify-jwt` |
-| Log says "switched off in Taskz" | Toggle is off. The watermark isn't advanced, so nothing is lost — mail sent while off is picked up once it's back on |
+| Log says "switched off in Slate" | Toggle is off. The watermark isn't advanced, so nothing is lost — mail sent while off is picked up once it's back on |
 | Suggestions in the table, no badge | Realtime not enabled on `task_suggestions` — the `alter publication` at the end of the SQL file |
 | Same email suggested twice | `gmail_processed` row missing — check the function's `failures` array in its response |
 | Nothing at all, no errors | Watermark is ahead of your test mail. `tearDown()` clears it, then `setUp()` |

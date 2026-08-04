@@ -50,11 +50,82 @@ function updateColumnCounts() {
 //   return data;
 // }
 
+/*
+* Bot protection (Cloudflare Turnstile)
+*
+* Supabase verifies the token server-side, so this can't be skipped by calling
+* the auth endpoint directly with the anon key. With no site key configured the
+* whole thing is inert and sign-in behaves as it did before — enable CAPTCHA in
+* Supabase (Auth → Attack Protection) at the same time as setting the key.
+*/
+
+const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY;
+let turnstileWidgetId = null;
+let turnstileToken = null;
+let turnstileWaiters = [];
+
+function resolveTurnstile(token) {
+	turnstileToken = token;
+	const waiters = turnstileWaiters;
+	turnstileWaiters = [];
+	waiters.forEach(fn => fn(token));
+}
+
+function loadTurnstile() {
+	if (!turnstileSiteKey) return;
+
+	window.slateTurnstileReady = function () {
+		turnstileWidgetId = window.turnstile.render('#auth-captcha', {
+			sitekey: turnstileSiteKey,
+			// Stays invisible unless Cloudflare decides a challenge is needed.
+			appearance: 'interaction-only',
+			theme: 'light',
+			callback: resolveTurnstile,
+			'error-callback': function () { resolveTurnstile(null); },
+			'expired-callback': function () { resetTurnstile(); },
+		});
+	};
+
+	const script = document.createElement('script');
+	script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=slateTurnstileReady';
+	script.async = true;
+	script.defer = true;
+	document.head.appendChild(script);
+}
+
+// Tokens are single-use — a new one is needed after every sign-in attempt.
+function resetTurnstile() {
+	turnstileToken = null;
+	if (turnstileWidgetId !== null && window.turnstile) {
+		window.turnstile.reset(turnstileWidgetId);
+	}
+}
+
+function getCaptchaToken() {
+	if (!turnstileSiteKey) return Promise.resolve(undefined);
+	if (turnstileToken) return Promise.resolve(turnstileToken);
+
+	return new Promise(function (resolve) {
+		let settled = false;
+		const done = function (token) {
+			if (settled) return;
+			settled = true;
+			resolve(token);
+		};
+		turnstileWaiters.push(done);
+		// Don't hang the form forever if the challenge never completes.
+		setTimeout(function () { done(null); }, 30000);
+	});
+}
+
+loadTurnstile();
+
 // Sign in with email/password
-async function signIn(email, password) {
+async function signIn(email, password, captchaToken) {
 	const { data, error } = await supabase.auth.signInWithPassword({
 		email,
 		password,
+		options: captchaToken ? { captchaToken } : undefined,
 	});
 	if (error) {
 		console.error('Sign in error:', error);
@@ -1211,6 +1282,7 @@ trashList.addEventListener('click', (e) => {
 */
 
 let userSettings = null;
+let settingsLoadError = null;
 let pendingSuggestions = [];
 let suggestionsChannel = null;
 
@@ -1240,6 +1312,7 @@ async function loadGmailIntegration() {
 }
 
 async function loadSettings() {
+	settingsLoadError = null;
 	try {
 		const { data, error } = await supabase
 			.from('user_settings')
@@ -1249,6 +1322,9 @@ async function loadSettings() {
 
 		if (error) {
 			console.error('Error loading settings:', error);
+			settingsLoadError = error.code === 'PGRST205'
+				? 'the Gmail tables are missing. Run supabase/schema/gmail-integration.sql in the SQL editor.'
+				: error.message;
 			return;
 		}
 
@@ -1266,11 +1342,13 @@ async function loadSettings() {
 
 		if (insertError) {
 			console.error('Error creating settings:', insertError);
+			settingsLoadError = insertError.message;
 			return;
 		}
 		userSettings = created;
 	} catch (err) {
 		console.error('loadSettings threw:', err);
+		settingsLoadError = err.message;
 	}
 }
 
@@ -1477,7 +1555,9 @@ suggestionsList.addEventListener('click', (e) => {
 
 function openSettingsModal() {
 	if (!userSettings) {
-		alert('Settings are still loading — try again in a moment.');
+		alert(settingsLoadError
+			? `Settings could not load — ${settingsLoadError}`
+			: 'Settings are still loading — try again in a moment.');
 		return;
 	}
 
@@ -1645,14 +1725,14 @@ window.addEventListener('beforeunload', (e) => {
 checkAuth();
 
 // Expose debugging functions globally
-window.taskzDebug = {
+window.slateDebug = {
 	saveBoardToSupabase,
 	loadBoardFromSupabase,
 	getBoardData,
 	getCurrentUser: () => currentUser,
 	supabase
 };
-console.log('Taskz loaded. Debug with window.taskzDebug');
+console.log('Slate loaded. Debug with window.slateDebug');
 
 /*
 * Auth Form Event Handlers
@@ -1683,7 +1763,21 @@ if (authForm) {
 
 		const email = document.getElementById('auth-email').value;
 		const password = document.getElementById('auth-password').value;
-		const result = await signIn(email, password);
+
+		const captchaToken = await getCaptchaToken();
+		if (turnstileSiteKey && !captchaToken) {
+			authError.textContent = 'Could not verify you are human. Please try again.';
+			authError.style.display = 'block';
+			authSubmit.disabled = false;
+			authSubmit.textContent = 'Sign In';
+			resetTurnstile();
+			return;
+		}
+
+		const result = await signIn(email, password, captchaToken);
+
+		// Whatever the outcome, the token is spent.
+		resetTurnstile();
 
 		if (result.error) {
 			authError.textContent = result.error.message;
